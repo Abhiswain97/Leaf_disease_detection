@@ -2,6 +2,5 @@
 .ipynb_checkpoints
 image_superpixel_pkls/
 Labels/
-Leaf disease/
-logs/
+Leaf_disease/
 tflite-models/
