@@ -4,3 +4,4 @@ image_superpixel_pkls/
 Labels/
 Leaf_disease/
 tflite-models/
+*.npy
