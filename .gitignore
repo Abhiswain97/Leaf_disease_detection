@@ -1,0 +1,7 @@
+.idea
+.ipynb_checkpoints
+image_superpixel_pkls
+Labels
+Leaf disease
+logs
+tflite-models
