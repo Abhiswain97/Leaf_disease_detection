@@ -1,9 +1,8 @@
 .idea
 .ipynb_checkpoints
-_pycache_/
+__pycache__/
 image_superpixel_pkls/
 Labels/
 Leaf_disease/
 tflite-models/
 *.npy
-CNN.py
