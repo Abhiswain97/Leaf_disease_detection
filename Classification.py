@@ -9,19 +9,26 @@ import cv2
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model, tree, ensemble, metrics
+from xgboost import XGBClassifier
 
 from skimage.feature import greycomatrix, greycoprops
 from tqdm import tqdm
-from joblib import Parallel, delayed
 import functools
 import time
 import warnings
+import model_tf
 
 warnings.filterwarnings('ignore')
 
+from joblib import Memory, Parallel, delayed
+location = 'cachedir'
+memory = Memory(location, verbose=0)
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class Classify:
-    def __init__(self):
+    def __init__(self, file):
+        self.file = file
         self.data = {}
         self.name = []
         self.energy = []
@@ -113,8 +120,10 @@ class Classify:
         X, y = [], []
         for file1 in tqdm(os.listdir('Labels\\RGB_superpixels'), total=len(os.listdir('Labels\\RGB_superpixels'))):
             for file2 in os.listdir('Labels\\mask_ground_truth'):
-                # print(file1.split('_')[-1], file2.split('_')[-1])
-                # print(file1[:file1.rindex('_')], file2[:file2.rindex('_')])
+                print(file1.split('_')[-1], file2.split('_')[-1])
+                print(file1[:file1.rindex('_')], file2[:file2.rindex('_')])
+                if file1 in []:
+                    pass
                 if file1[:file1.rindex('_')] == file2[:file2.rindex('_')] and file1.split('_')[-1] == 'multiclass.npy':
                     spxl = np.load(os.path.join('Labels\\RGB_superpixels', file1))
                     R = spxl[:, :, 0].flatten()
@@ -133,8 +142,8 @@ class Classify:
                     print('accuracy', metrics.accuracy_score(y_test, rfc.predict(X_test)))
                     print(y_test)
 
-    def classifier(self, file='features(binary_classify)(RGB).csv'):
-        df = pd.read_csv(file)
+    def classifier(self):
+        df = pd.read_csv(self.file)
 
         names = df['name'].values
         X = df.iloc[:, 1:5].values
@@ -142,16 +151,17 @@ class Classify:
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
 
-        print('Logistic')
-        reg = self.models['logistic'].fit(X_train, y_train)
-        print(self.metrics('f1_score', y_test, reg.predict(X_test)))
-        print(self.metrics('confusion_matrix', y_test, reg.predict(X_test)))
+        # print('Random forest')
+        # rfc = self.models['random_forest'].fit(X_train, y_train)
+        # print('f1_score: ', self.metrics('f1_score', y_test, rfc.predict(X_test)))
+        # print('precision: ', self.metrics('precision', y_test, rfc.predict(X_test)))
+        # print('recall: ', self.metrics('recall', y_test, rfc.predict(X_test)))
 
-        print('Random forest')
-        rfc = self.models['random_forest'].fit(X_train, y_train)
-        print('f1_score: ', self.metrics('f1_score', y_test, rfc.predict(X_test)))
-        print('precision: ', self.metrics('precision', y_test, rfc.predict(X_test)))
-        print('recall: ', self.metrics('recall', y_test, rfc.predict(X_test)))
+        print('XGBoost')
+        model = XGBClassifier()
+        model.fit(X_train, y_train)
+        print(metrics.accuracy_score(y_test, model.predict(X_test)))
+
         # print(self.metrics('confusion_matrix', y_test, rfc.predict(X_test)))
         # self.plot_cm(y_test, rfc.predict(X_test))
         # print(self.metrics('plot_confusion_matrix', y_test,
@@ -159,6 +169,14 @@ class Classify:
         #                    rfc,
         #                    X_test,
         #                    ['Bacterial_leaf_blight', 'Brown_spot', 'leaf_smut']))
+
+    def NeuralNet(self):
+        
+        tfnet = model_tf.TfNet(self.file, 500, 32)
+        model = tfnet.model()
+        history = tfnet.train(model)
+        # tfnet.plot(history)
+
 
     @functools.lru_cache(maxsize=128)
     def glcm(self):
@@ -193,11 +211,11 @@ class Classify:
 
 
 if __name__ == '__main__':
-    cl = Classify()
+    cl = Classify(file='features(multiclass_classify)(RGB).csv')
     # cl.glcm()
     # cl.classifier()
     # cl.make_label()
-    cl.mask_predict()
+    # cl.mask_predict()
     # cl.make_json()
-# X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.33, random_state=42)
-# print(X_train)
+    nn = memory.cache(cl.NeuralNet())
+
