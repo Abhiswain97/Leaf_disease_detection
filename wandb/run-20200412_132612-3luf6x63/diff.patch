@@ -1,0 +1,490 @@
+diff --git a/Classification.py b/Classification.py
+index 22b6df5f..a5adcf14 100644
+--- a/Classification.py
++++ b/Classification.py
+@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
+ # import seaborn as sns
+ import cv2
+ import pandas as pd
++import metrics
++
++from metrics import ClassificationMetrics
++
+ from sklearn.model_selection import train_test_split
+ from sklearn import linear_model, tree, ensemble, metrics
+ from xgboost import XGBClassifier
+@@ -24,8 +28,6 @@ from joblib import Memory, Parallel, delayed
+ location = 'cachedir'
+ memory = Memory(location, verbose=0)
+ 
+-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+-
+ class Classify:
+     def __init__(self, file):
+         self.file = file
+@@ -71,24 +73,24 @@ class Classify:
+         sns.heatmap(cm, cmap="YlGnBu", annot=annot, fmt='', ax=ax)
+         plt.show()
+ 
+-    def metrics(self, name, y_true, y_pred):
+-        if name == 'f1_score':
+-            if len(np.unique(y_pred)) > 2:
+-                return metrics.f1_score(y_true, y_pred, average='weighted')
+-            else:
+-                return metrics.f1_score(y_true, y_pred)
+-        if name == 'recall':
+-            if len(np.unique(y_pred)) > 2:
+-                return metrics.recall_score(y_true, y_pred, average='weighted')
+-            else:
+-                return metrics.recall_score(y_true, y_pred)
+-        if name == 'precision':
+-            if len(np.unique(y_pred)) > 2:
+-                return metrics.precision_score(y_true, y_pred, average='weighted')
+-            else:
+-                return metrics.precision_score(y_true, y_pred)
+-        if name == 'confusion_matrix':
+-            return metrics.confusion_matrix(y_true, y_pred)
++    # def metrics(self, name, y_true, y_pred):
++    #     if name == 'f1_score':
++    #         if len(np.unique(y_pred)) > 2:
++    #             return metrics.f1_score(y_true, y_pred, average='weighted')
++    #         else:
++    #             return metrics.f1_score(y_true, y_pred)
++    #     if name == 'recall':
++    #         if len(np.unique(y_pred)) > 2:
++    #             return metrics.recall_score(y_true, y_pred, average='weighted')
++    #         else:
++    #             return metrics.recall_score(y_true, y_pred)
++    #     if name == 'precision':
++    #         if len(np.unique(y_pred)) > 2:
++    #             return metrics.precision_score(y_true, y_pred, average='weighted')
++    #         else:
++    #             return metrics.precision_score(y_true, y_pred)
++    #     if name == 'confusion_matrix':
++    #         return metrics.confusion_matrix(y_true, y_pred)
+ 
+     def make_json(self):
+         def convert(o):
+@@ -160,7 +162,8 @@ class Classify:
+         print('XGBoost')
+         model = XGBClassifier()
+         model.fit(X_train, y_train)
+-        print(metrics.accuracy_score(y_test, model.predict(X_test)))
++        acc = ClassificationMetrics()
++        print('Accuracy score: ', acc('accuracy', y_test, model.predict(X_test)))
+ 
+         # print(self.metrics('confusion_matrix', y_test, rfc.predict(X_test)))
+         # self.plot_cm(y_test, rfc.predict(X_test))
+@@ -213,9 +216,9 @@ class Classify:
+ if __name__ == '__main__':
+     cl = Classify(file='features(multiclass_classify)(RGB).csv')
+     # cl.glcm()
+-    # cl.classifier()
++    cl.classifier()
+     # cl.make_label()
+     # cl.mask_predict()
+     # cl.make_json()
+-    nn = memory.cache(cl.NeuralNet())
++    # nn = memory.cache(cl.NeuralNet())
+ 
+diff --git a/wandb/debug.log b/wandb/debug.log
+index 9d7126b9..46d5bbce 100644
+--- a/wandb/debug.log
++++ b/wandb/debug.log
+@@ -1,379 +1,17 @@
+-2020-04-12 15:18:44,561 DEBUG   MainThread:20724 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
+-2020-04-12 15:18:44,583 DEBUG   MainThread:20724 [meta.py:setup():97] code probe starting
+-2020-04-12 15:18:44,583 DEBUG   MainThread:20724 [meta.py:setup():101] non time limited probe of code
+-2020-04-12 15:18:44,595 DEBUG   MainThread:20724 [meta.py:_setup_code_git():49] probe for git information
+-2020-04-12 15:18:44,688 DEBUG   MainThread:20724 [meta.py:_setup_code_program():58] save program starting
+-2020-04-12 15:18:44,688 DEBUG   MainThread:20724 [meta.py:_setup_code_program():60] save program starting: E:/Btech project/leaf-disease\.\Classification.py
+-2020-04-12 15:18:44,701 DEBUG   MainThread:20724 [meta.py:_setup_code_program():65] save program saved: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\code\Classification.py
+-2020-04-12 15:18:44,701 DEBUG   MainThread:20724 [meta.py:_setup_code_program():67] save program
+-2020-04-12 15:18:44,727 DEBUG   MainThread:20724 [meta.py:setup():119] code probe done
+-2020-04-12 15:18:44,738 DEBUG   MainThread:20724 [run_manager.py:__init__():545] Initialized sync for leaf_disease/3e10jj4s
+-2020-04-12 15:18:44,741 INFO    MainThread:20724 [run_manager.py:wrap_existing_process():1148] wrapping existing process 19028
+-2020-04-12 15:18:45,533 INFO    MainThread:20724 [run_manager.py:init_run():928] system metrics and metadata threads started
+-2020-04-12 15:18:45,538 INFO    MainThread:20724 [run_manager.py:init_run():967] upserting run before process can begin, waiting at most 10 seconds
+-2020-04-12 15:18:45,576 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\config.yaml
+-2020-04-12 15:18:45,924 INFO    Thread-20 :20724 [run_manager.py:_upsert_run():1052] saving patches
+-2020-04-12 15:18:47,297 INFO    Thread-20 :20724 [run_manager.py:_upsert_run():1056] saving pip packages
+-2020-04-12 15:18:47,306 INFO    Thread-20 :20724 [run_manager.py:_upsert_run():1058] initializing streaming files api
+-2020-04-12 15:18:47,307 INFO    Thread-20 :20724 [run_manager.py:_upsert_run():1065] unblocking file change observer, beginning sync with W&B servers
+-2020-04-12 15:18:47,307 INFO    MainThread:20724 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
+-2020-04-12 15:18:47,315 INFO    MainThread:20724 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
+-2020-04-12 15:18:47,960 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:18:47,960 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:18:47,960 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\code\Classification.py
+-2020-04-12 15:18:47,961 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\code
+-2020-04-12 15:18:47,961 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\diff.patch
+-2020-04-12 15:18:47,961 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\config.yaml
+-2020-04-12 15:18:47,962 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:18:47,962 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\diff.patch
+-2020-04-12 15:18:47,962 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\upstream_diff_0530406a62438c76b4717dd938ef2448ce93e473.patch
+-2020-04-12 15:18:47,963 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\requirements.txt
+-2020-04-12 15:18:49,317 INFO    MainThread:20724 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "model-best.h5", "policy": "live"}}
+-2020-04-12 15:18:49,581 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:18:49,582 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\media\graph\graph_summary_2f71848a.graph.json
+-2020-04-12 15:18:49,583 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\media\graph
+-2020-04-12 15:18:49,584 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\media
+-2020-04-12 15:18:50,586 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:18:50,596 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:18:50,597 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:18:51,588 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:18:52,590 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:18:52,590 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:18:52,590 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:18:53,592 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:18:53,592 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:18:54,597 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:18:54,597 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:18:54,598 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:18:55,600 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:18:55,600 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:18:56,607 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:18:56,608 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:18:56,608 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:18:56,608 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:18:57,612 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:18:58,618 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:18:58,618 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:18:58,619 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:18:59,622 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:18:59,623 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:18:59,623 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:00,625 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:00,625 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:01,630 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:01,632 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:19:01,633 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:02,636 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:02,637 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:02,637 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:03,651 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:03,653 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:04,656 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:04,657 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:04,658 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:04,658 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:05,659 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:05,660 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:06,662 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:06,664 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:07,671 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:07,672 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:07,673 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:07,673 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:08,674 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:08,674 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:09,677 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:09,678 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:10,680 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:10,681 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:10,681 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:11,684 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:11,685 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:11,685 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:12,687 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:12,688 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:12,688 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:13,692 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:13,693 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:14,695 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:14,695 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:14,696 INFO    Thread-7  :20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-events.jsonl
+-2020-04-12 15:19:15,699 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:15,699 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:15,700 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:16,702 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:16,703 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:17,712 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:19:17,712 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:18,715 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:18,716 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:19,720 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:19,720 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:19,721 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:20,724 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:20,725 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:21,735 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:21,736 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:22,738 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:22,739 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:22,739 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:22,739 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:23,741 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:24,743 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:24,744 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:25,751 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:25,751 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:25,751 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:26,763 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:26,764 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:26,764 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:27,766 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:27,767 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:28,769 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:28,769 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:29,783 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:29,784 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:30,789 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:30,789 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:30,789 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:31,792 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:32,795 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:32,796 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:33,800 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:33,800 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:33,800 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:19:33,800 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:34,802 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:34,802 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:35,807 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:35,808 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:35,808 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:36,820 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:36,831 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:37,832 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:37,834 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:38,836 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:38,836 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:38,837 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:39,844 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:39,845 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:40,850 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:40,850 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:41,864 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:41,865 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:41,866 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:42,868 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:42,869 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:43,872 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:43,872 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:44,879 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:44,880 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-events.jsonl
+-2020-04-12 15:19:44,881 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:45,886 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:45,886 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:45,887 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:45,887 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:46,888 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:46,888 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:47,895 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:48,899 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:48,900 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:48,900 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:49,908 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:19:49,909 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:50,914 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:50,914 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:51,918 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:52,925 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:52,926 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:52,927 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:53,928 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:54,931 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:54,931 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:19:54,932 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:55,946 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:55,946 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:55,947 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:56,956 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:56,957 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:57,960 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:57,960 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:58,963 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:58,964 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:19:59,967 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:19:59,967 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:19:59,968 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:00,979 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:00,980 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:01,986 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:02,994 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:02,995 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:02,996 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:03,998 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:05,002 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:05,002 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:06,005 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:06,006 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:20:06,006 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:07,009 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:07,010 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:07,010 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:08,017 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:08,019 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:09,021 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:09,021 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:10,025 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:10,025 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:10,026 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:11,028 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:11,028 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:12,031 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:12,031 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:13,035 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:13,035 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:14,051 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:14,052 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:14,053 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:15,055 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:15,055 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-events.jsonl
+-2020-04-12 15:20:15,056 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:16,060 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:16,061 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:17,067 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:17,068 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:17,068 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:18,071 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:18,072 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:20:18,072 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:19,075 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:19,076 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:20,093 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:20,094 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:21,103 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:21,104 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:21,105 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:22,109 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:22,109 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:20:22,109 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:23,122 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:23,123 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:24,127 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:24,127 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:24,127 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:25,133 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:26,136 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:26,137 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:27,143 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:27,144 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model-best.h5
+-2020-04-12 15:20:27,144 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:28,150 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:28,150 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:29,154 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:29,155 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:30,169 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:30,171 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:31,175 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:31,176 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:32,179 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:32,180 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:33,183 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:34,193 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:34,194 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:35,199 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:35,199 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:35,200 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:36,202 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:36,203 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:37,204 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:37,205 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:38,210 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:38,210 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:38,211 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:20:38,211 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:39,214 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:39,215 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:40,218 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:40,220 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:41,222 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:41,223 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:41,223 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:42,226 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:42,226 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:43,232 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:43,232 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:44,237 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:44,238 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:45,242 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:45,243 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:45,243 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-events.jsonl
+-2020-04-12 15:20:45,243 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:46,253 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:46,254 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:47,269 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:48,272 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:48,273 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:49,285 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:49,285 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:49,286 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:50,291 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:50,291 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:51,295 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:51,296 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:52,302 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:52,303 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:52,303 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:53,307 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:54,320 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:54,321 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:20:54,322 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:55,323 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:55,324 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:56,328 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:56,328 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:56,328 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:57,332 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:58,335 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:58,335 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:20:59,342 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:20:59,342 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:20:59,343 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:00,352 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:21:00,353 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:01,355 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:02,364 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:21:02,365 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:03,375 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:21:03,376 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:04,380 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:21:04,380 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:05,383 INFO    Thread-7  :20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:05,467 INFO    MainThread:20724 [run_manager.py:_sync_etc():1295] received message from user process: {"exitcode": 0}
+-2020-04-12 15:21:05,468 INFO    MainThread:20724 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
+-2020-04-12 15:21:05,472 INFO    MainThread:20724 [run_manager.py:shutdown():1072] shutting down system stats and metadata service
+-2020-04-12 15:21:06,382 INFO    MainThread:20724 [run_manager.py:shutdown():1084] stopping streaming files and file change observer
+-2020-04-12 15:21:06,395 INFO    MainThread:20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-events.jsonl
+-2020-04-12 15:21:06,396 INFO    MainThread:20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:21:06,397 INFO    MainThread:20724 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:21:06,398 INFO    MainThread:20724 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model.h5
+-2020-04-12 15:21:08,387 INFO    MainThread:20724 [run_manager.py:_sync_etc():1400] rendering summary
+-2020-04-12 15:21:08,402 INFO    MainThread:20724 [run_manager.py:_sync_etc():1433] syncing files to cloud storage
+-2020-04-12 15:21:56,061 INFO    MainThread:20724 [run_manager.py:_sync_etc():1448] syncing complete: https://app.wandb.ai/abhiswain/leaf_disease/runs/3e10jj4s
+-n_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:02,364 INFO    Thread-7  :20724 [3e10jj4s:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:21:02,365 INFO    Thread-7  :20724 [3e10jj4s:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:03,375 INFO    Thread-7  :20724 [3e10jj4s:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:21:03,376 INFO    Thread-7  :20724 [3e10jj4s:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:04,380 INFO    Thread-7  :20724 [3e10jj4s:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-summary.json
+-2020-04-12 15:21:04,380 INFO    Thread-7  :20724 [3e10jj4s:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:05,383 INFO    Thread-7  :20724 [3e10jj4s:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-history.jsonl
+-2020-04-12 15:21:05,467 INFO    MainThread:20724 [3e10jj4s:run_manager.py:_sync_etc():1295] received message from user process: {"exitcode": 0}
+-2020-04-12 15:21:05,468 INFO    MainThread:20724 [3e10jj4s:run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
+-2020-04-12 15:21:05,472 INFO    MainThread:20724 [3e10jj4s:run_manager.py:shutdown():1072] shutting down system stats and metadata service
+-2020-04-12 15:21:06,382 INFO    MainThread:20724 [3e10jj4s:run_manager.py:shutdown():1084] stopping streaming files and file change observer
+-2020-04-12 15:21:06,395 INFO    MainThread:20724 [3e10jj4s:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-events.jsonl
+-2020-04-12 15:21:06,396 INFO    MainThread:20724 [3e10jj4s:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\output.log
+-2020-04-12 15:21:06,397 INFO    MainThread:20724 [3e10jj4s:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\wandb-metadata.json
+-2020-04-12 15:21:06,398 INFO    MainThread:20724 [3e10jj4s:run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_094843-3e10jj4s\model.h5
+-2020-04-12 15:21:08,387 INFO    MainThread:20724 [3e10jj4s:run_manager.py:_sync_etc():1400] rendering summary
+-2020-04-12 15:21:08,402 INFO    MainThread:20724 [3e10jj4s:run_manager.py:_sync_etc():1433] syncing files to cloud storage
+-2020-04-12 15:21:56,061 INFO    MainThread:20724 [3e10jj4s:run_manager.py:_sync_etc():1448] syncing complete: https://app.wandb.ai/abhiswain/leaf_disease/runs/3e10jj4s
++2020-04-12 18:56:13,818 DEBUG   MainThread:5096 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
++2020-04-12 18:56:13,850 DEBUG   MainThread:5096 [meta.py:setup():97] code probe starting
++2020-04-12 18:56:13,850 DEBUG   MainThread:5096 [meta.py:setup():101] non time limited probe of code
++2020-04-12 18:56:13,860 DEBUG   MainThread:5096 [meta.py:_setup_code_git():49] probe for git information
++2020-04-12 18:56:13,988 DEBUG   MainThread:5096 [meta.py:_setup_code_program():58] save program starting
++2020-04-12 18:56:13,988 DEBUG   MainThread:5096 [meta.py:_setup_code_program():60] save program starting: e:\Btech project\leaf-disease\Classification.py
++2020-04-12 18:56:14,000 DEBUG   MainThread:5096 [meta.py:_setup_code_program():65] save program saved: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\code\Classification.py
++2020-04-12 18:56:14,000 DEBUG   MainThread:5096 [meta.py:_setup_code_program():67] save program
++2020-04-12 18:56:14,008 DEBUG   MainThread:5096 [meta.py:setup():119] code probe done
++2020-04-12 18:56:14,024 DEBUG   MainThread:5096 [run_manager.py:__init__():545] Initialized sync for leaf_disease/3luf6x63
++2020-04-12 18:56:14,031 INFO    MainThread:5096 [run_manager.py:wrap_existing_process():1148] wrapping existing process 1744
++2020-04-12 18:56:14,240 INFO    MainThread:5096 [run_manager.py:init_run():928] system metrics and metadata threads started
++2020-04-12 18:56:14,240 INFO    MainThread:5096 [run_manager.py:init_run():967] upserting run before process can begin, waiting at most 10 seconds
++2020-04-12 18:56:14,845 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\config.yaml
++2020-04-12 18:56:15,353 INFO    Thread-20 :5096 [run_manager.py:_upsert_run():1052] saving patches
++le/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\config.yaml
++2020-04-12 18:56:15,353 INFO    Thread-20 :5096 [3luf6x63:run_manager.py:_upsert_run():1052] saving patches

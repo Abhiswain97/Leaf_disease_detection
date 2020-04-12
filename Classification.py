@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 # import seaborn as sns
 import cv2
 import pandas as pd
+import metrics
+
+from metrics import ClassificationMetrics
+
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model, tree, ensemble, metrics
 from xgboost import XGBClassifier
@@ -23,8 +27,6 @@ warnings.filterwarnings('ignore')
 from joblib import Memory, Parallel, delayed
 location = 'cachedir'
 memory = Memory(location, verbose=0)
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class Classify:
     def __init__(self, file):
@@ -71,24 +73,24 @@ class Classify:
         sns.heatmap(cm, cmap="YlGnBu", annot=annot, fmt='', ax=ax)
         plt.show()
 
-    def metrics(self, name, y_true, y_pred):
-        if name == 'f1_score':
-            if len(np.unique(y_pred)) > 2:
-                return metrics.f1_score(y_true, y_pred, average='weighted')
-            else:
-                return metrics.f1_score(y_true, y_pred)
-        if name == 'recall':
-            if len(np.unique(y_pred)) > 2:
-                return metrics.recall_score(y_true, y_pred, average='weighted')
-            else:
-                return metrics.recall_score(y_true, y_pred)
-        if name == 'precision':
-            if len(np.unique(y_pred)) > 2:
-                return metrics.precision_score(y_true, y_pred, average='weighted')
-            else:
-                return metrics.precision_score(y_true, y_pred)
-        if name == 'confusion_matrix':
-            return metrics.confusion_matrix(y_true, y_pred)
+    # def metrics(self, name, y_true, y_pred):
+    #     if name == 'f1_score':
+    #         if len(np.unique(y_pred)) > 2:
+    #             return metrics.f1_score(y_true, y_pred, average='weighted')
+    #         else:
+    #             return metrics.f1_score(y_true, y_pred)
+    #     if name == 'recall':
+    #         if len(np.unique(y_pred)) > 2:
+    #             return metrics.recall_score(y_true, y_pred, average='weighted')
+    #         else:
+    #             return metrics.recall_score(y_true, y_pred)
+    #     if name == 'precision':
+    #         if len(np.unique(y_pred)) > 2:
+    #             return metrics.precision_score(y_true, y_pred, average='weighted')
+    #         else:
+    #             return metrics.precision_score(y_true, y_pred)
+    #     if name == 'confusion_matrix':
+    #         return metrics.confusion_matrix(y_true, y_pred)
 
     def make_json(self):
         def convert(o):
@@ -160,7 +162,8 @@ class Classify:
         print('XGBoost')
         model = XGBClassifier()
         model.fit(X_train, y_train)
-        print(metrics.accuracy_score(y_test, model.predict(X_test)))
+        acc = ClassificationMetrics()
+        print('Accuracy score: ', acc('accuracy', y_test, model.predict(X_test)))
 
         # print(self.metrics('confusion_matrix', y_test, rfc.predict(X_test)))
         # self.plot_cm(y_test, rfc.predict(X_test))
@@ -213,9 +216,9 @@ class Classify:
 if __name__ == '__main__':
     cl = Classify(file='features(multiclass_classify)(RGB).csv')
     # cl.glcm()
-    # cl.classifier()
+    cl.classifier()
     # cl.make_label()
     # cl.mask_predict()
     # cl.make_json()
-    nn = memory.cache(cl.NeuralNet())
+    # nn = memory.cache(cl.NeuralNet())
 

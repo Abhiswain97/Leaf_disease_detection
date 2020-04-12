@@ -1,0 +1,7 @@
+XGBoost
+Traceback (most recent call last):
+  File "Classification.py", line 220, in <module>
+    cl.classifier()
+  File "Classification.py", line 167, in classifier
+    print('Accuracy score: ', ClassificationMetrics('accuracy', y_test, model.predict(X_test)))
+TypeError: __init__() takes 1 positional argument but 4 were given

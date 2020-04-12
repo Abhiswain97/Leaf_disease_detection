@@ -1,0 +1,24 @@
+{
+    "root": "E:/Btech project/leaf-disease",
+    "program": "e:\\Btech project\\leaf-disease\\Classification.py",
+    "git": {
+        "remote": "https://github.com/Abhiswain97/Leaf_disease_detection.git",
+        "commit": "eb70c11e0730237488dc3a7a0dc6ba51e05669a5"
+    },
+    "email": "abhiswain.it.2016@gmail.com",
+    "codePath": "Classification.py",
+    "startedAt": "2020-04-12T13:26:12.953020",
+    "host": "LAPTOP-SJKV0KE7",
+    "username": "AbhishekSwain",
+    "executable": "C:\\Users\\Abhishek Swain\\miniconda3\\envs\\myenv\\python.exe",
+    "os": "Windows-10-10.0.18362-SP0",
+    "python": "3.8.2",
+    "cpu_count": 8,
+    "args": [],
+    "state": "finished",
+    "jobType": null,
+    "mode": "run",
+    "project": "leaf_disease",
+    "heartbeatAt": "2020-04-12T13:26:21.246108",
+    "exitcode": 0
+}
