@@ -4,7 +4,7 @@ import json
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-# import seaborn as sns
+import seaborn as sns
 import cv2
 import pandas as pd
 import metrics
@@ -20,17 +20,19 @@ from tqdm import tqdm
 import functools
 import time
 import warnings
-import model_tf
+
+# import model_tf
 
 warnings.filterwarnings('ignore')
 
 from joblib import Memory, Parallel, delayed
+
 location = 'cachedir'
 memory = Memory(location, verbose=0)
 
+
 class Classify:
-    def __init__(self, file):
-        self.file = file
+    def __init__(self):
         self.data = {}
         self.name = []
         self.energy = []
@@ -72,25 +74,6 @@ class Classify:
         fig, ax = plt.subplots(figsize=figsize)
         sns.heatmap(cm, cmap="YlGnBu", annot=annot, fmt='', ax=ax)
         plt.show()
-
-    # def metrics(self, name, y_true, y_pred):
-    #     if name == 'f1_score':
-    #         if len(np.unique(y_pred)) > 2:
-    #             return metrics.f1_score(y_true, y_pred, average='weighted')
-    #         else:
-    #             return metrics.f1_score(y_true, y_pred)
-    #     if name == 'recall':
-    #         if len(np.unique(y_pred)) > 2:
-    #             return metrics.recall_score(y_true, y_pred, average='weighted')
-    #         else:
-    #             return metrics.recall_score(y_true, y_pred)
-    #     if name == 'precision':
-    #         if len(np.unique(y_pred)) > 2:
-    #             return metrics.precision_score(y_true, y_pred, average='weighted')
-    #         else:
-    #             return metrics.precision_score(y_true, y_pred)
-    #     if name == 'confusion_matrix':
-    #         return metrics.confusion_matrix(y_true, y_pred)
 
     def make_json(self):
         def convert(o):
@@ -144,15 +127,20 @@ class Classify:
                     print('accuracy', metrics.accuracy_score(y_test, rfc.predict(X_test)))
                     print(y_test)
 
-    def classifier(self):
-        df = pd.read_csv(self.file)
+    def classifier(self, file):
+        df = pd.read_csv(file)
 
         names = df['name'].values
         X = df.iloc[:, 1:5].values
         y = df['label'].values
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+        # rus = RandomUnderSampler(random_state=0)
+        ens = EditedNearestNeighbours()
+        # X_resampled, y_resampled = rus.fit_resample(X, y)
+        X_resampled, y_resampled = ens.fit_resample(X, y)
 
+        X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25, random_state=42)
+        # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)      
         # print('Random forest')
         # rfc = self.models['random_forest'].fit(X_train, y_train)
         # print('f1_score: ', self.metrics('f1_score', y_test, rfc.predict(X_test)))
@@ -162,9 +150,20 @@ class Classify:
         print('XGBoost')
         model = XGBClassifier()
         model.fit(X_train, y_train)
-        acc = ClassificationMetrics()
-        print('Accuracy score: ', acc('accuracy', y_test, model.predict(X_test)))
+        metric = ClassificationMetrics()
+        print('Accuracy score: ', metric('accuracy', y_test, model.predict(X_test)))
+        print('Precision score: ', metric('precision', y_test, model.predict(X_test)))
+        print('Recall score: ', metric('recall', y_test, model.predict(X_test)))
 
+        # self.plot_cm(y_test, model.predict(X_test))
+
+        # y_pred = model.predict(X_test)
+        # disease = {}
+
+        # for x, y in zip(y_test, y_pred):
+        #     disease[f'{x}'] = y
+
+        # print(disease)
         # print(self.metrics('confusion_matrix', y_test, rfc.predict(X_test)))
         # self.plot_cm(y_test, rfc.predict(X_test))
         # print(self.metrics('plot_confusion_matrix', y_test,
@@ -174,12 +173,11 @@ class Classify:
         #                    ['Bacterial_leaf_blight', 'Brown_spot', 'leaf_smut']))
 
     def NeuralNet(self):
-        
+
         tfnet = model_tf.TfNet(self.file, 500, 32)
         model = tfnet.model()
         history = tfnet.train(model)
         # tfnet.plot(history)
-
 
     @functools.lru_cache(maxsize=128)
     def glcm(self):
@@ -214,11 +212,10 @@ class Classify:
 
 
 if __name__ == '__main__':
-    cl = Classify(file='features(multiclass_classify)(RGB).csv')
+    cl = Classify()
     # cl.glcm()
-    cl.classifier()
+    cl.classifier('features(binary_classify).csv')
     # cl.make_label()
     # cl.mask_predict()
     # cl.make_json()
     # nn = memory.cache(cl.NeuralNet())
-
