@@ -2,7 +2,6 @@ import os
 import pickle
 import json
 import glob
-import time
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -16,7 +15,6 @@ from handle_imbalance import Imbalance
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model, tree, ensemble, metrics
 from xgboost import XGBClassifier
-from catboost import CatBoostClassifier, Pool, cv
 
 from skimage.feature import greycomatrix, greycoprops
 from tqdm import tqdm
@@ -24,10 +22,10 @@ import functools
 import time
 import warnings
 
-# import model_tf
+import model_tf
 
 warnings.filterwarnings('ignore')
-import joblib
+
 from joblib import Memory, Parallel, delayed
 
 location = 'cachedir'
@@ -47,7 +45,11 @@ class Classify:
         self.mask_label_path = 'Labels\\mask_ground_truth'
         self.binary_labels = np.load('Labels\\RGB_superpixels\\binary_labels(RGB).npy')
         self.multiclass_labels = np.load('Labels\\RGB_superpixels\\multiclass_labels(RGB).npy')
-        
+        self.models = {
+            'logistic': linear_model.LogisticRegression(),
+            'decision_tree': tree.DecisionTreeClassifier(),
+            'random_forest': ensemble.RandomForestClassifier()
+        }
 
     def plot_cm(self, y_true, y_pred, figsize=(10, 10)):
         cm = metrics.confusion_matrix(y_true, y_pred, labels=np.unique(y_true))
@@ -106,6 +108,8 @@ class Classify:
             for file2 in os.listdir('Labels\\mask_ground_truth'):
                 print(file1.split('_')[-1], file2.split('_')[-1])
                 print(file1[:file1.rindex('_')], file2[:file2.rindex('_')])
+                if file1 in []:
+                    pass
                 if file1[:file1.rindex('_')] == file2[:file2.rindex('_')] and file1.split('_')[-1] == 'multiclass.npy':
                     spxl = np.load(os.path.join('Labels\\RGB_superpixels', file1))
                     R = spxl[:, :, 0].flatten()
@@ -115,10 +119,7 @@ class Classify:
                         X.append([r, g, b])
                     y = np.load(os.path.join('Labels\\mask_ground_truth', file2)).flatten()
                     print(len(X), len(y))
-
-                    X_resampled, y_resampled = Imbalance()('repeated_edited_nearest_neighbours', X, y)
-
-                    X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25, random_state=42)
+                    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
                     print('Random forest')
                     rfc = self.models['random_forest'].fit(X_train, y_train)
                     print('f1_score: ', self.metrics('f1_score', y_test, rfc.predict(X_test)))
@@ -136,60 +137,39 @@ class Classify:
 
         undersamplers = list(Imbalance().under_samplers.keys())
 
-        X_resampled, y_resampled = Imbalance()('repeated_edited_nearest_neighbours', X, y)
+        for undersampler in undersamplers:
 
-        X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25,
-                                                            random_state=42)
+            X_resampled, y_resampled = Imbalance()(undersampler, X, y)
 
-        print(f'Using repeated_edited_nearest_neighbours')
+            X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25,
+                                                                random_state=42)
+            
+            print(f'Using {undersampler}')
+            print('XGBoost')
+            model = XGBClassifier()
+            model.fit(X_resampled, y_resampled)
+            metric = ClassificationMetrics()
+            print('Accuracy score: ', metric('accuracy', y_test, model.predict(X_test)))
+            print('Precision score: ', metric('precision', y_test, model.predict(X_test)))
+            print('Recall score: ', metric('recall', y_test, model.predict(X_test)))
+            print('Log loss: ', metric('logloss', y_test, None, model.predict_proba(X_test)))
 
-        for model in ['CatBoost', 'XGBoost']:
-            if model == 'CatBoost':
-                print('CatBoost')
-                cat_model = CatBoostClassifier(
-                    iterations=1000, 
-                    learning_rate=0.01, 
-                    loss_function='Logloss', 
-                    eval_metric='Accuracy',
-                    use_best_model=True
-                )
-                cat_model.fit(X_train, y_train, eval_set=(X_test, y_test))
+            self.plot_cm(y_test, model.predict(X_test))
 
-                self.plot_cm(y_test, model.predict(X_test))
+        # y_pred = model.predict(X_test)
+        # disease = {}
 
-            if model == 'XGBoost':
-                print('XGBoost')
-                model = XGBClassifier()
-                model.fit(X_train, y_train)
+        # for x, y in zip(y_test, y_pred):
+        #     disease[f'{x}'] = y
 
-                metric = ClassificationMetrics()
-                print('Accuracy score: ', metric('accuracy', y_test, model.predict(X_test)))
-                print('Precision score: ', metric('precision', y_test, model.predict(X_test)))
-                print('Recall score: ', metric('recall', y_test, model.predict(X_test)))
-                print('Log loss: ', metric('logloss', y_test, None, model.predict_proba(X_test)))
-                print('f1 score: ', metric('f1', y_test, model.predict(X_test)))
-
-                timestampTime = time.strftime("%H:%M:%S")
-                timestampDate = time.strftime("%d/%m/%Y")
-                timestampEND = timestampDate + '-' + timestampTime
-
-                results = {
-                    'model': 'XGBoost',
-                    'accuracy': metric('accuracy', y_test, model.predict(X_test)),
-                    'Precision score: ': metric('precision', y_test, model.predict(X_test)),
-                    'Recall score: ': metric('recall', y_test, model.predict(X_test)),
-                    'f1 score': metric('f1', y_test, model.predict(X_test)),
-                    'under_sampler': 'repeated_edited_nearest_neighbours',
-                    'time_stamp': timestampEND
-                }
-
-                fname = file.split('.')[0]
-
-                with open(f'results\\{fname}-6.json', 'w') as fp:
-                    json.dump(results, fp)
-
-                self.plot_cm(y_test, model.predict(X_test))
-
+        # print(disease)
+        # print(self.metrics('confusion_matrix', y_test, rfc.predict(X_test)))
+        # self.plot_cm(y_test, rfc.predict(X_test))
+        # print(self.metrics('plot_confusion_matrix', y_test,
+        #                    rfc.predict(X_test),
+        #                    rfc,
+        #                    X_test,
+        #                    ['Bacterial_leaf_blight', 'Brown_spot', 'leaf_smut']))
 
     def NeuralNet(self):
 
@@ -233,8 +213,8 @@ class Classify:
 if __name__ == '__main__':
     cl = Classify()
     # cl.glcm()
-    # cl.classifier('features(binary_classify)(RGB).csv')
+    # cl.classifier('features(binary_classify).csv')
     # cl.make_label()
-    cl.mask_predict()
+    # cl.mask_predict()
     # cl.make_json()
-    # cl.NeuralNet()
+    nn = memory.cache(cl.NeuralNet())

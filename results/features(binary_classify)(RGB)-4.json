@@ -1,0 +1,9 @@
+{
+    "model": "XGBoost",
+    "accuracy": 0.8758949880668258,
+    "Precision score: ": 0.899488926746167,
+    "Recall score: ": 0.8448,
+    "f1 score": 0.8712871287128713,
+    "under_sampler": "repeated_edited_nearest_neighbours",
+    "time_stamp": "14/04/2020-21:50:51"
+}

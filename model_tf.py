@@ -8,6 +8,7 @@ from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.models import Sequential
 from sklearn.model_selection import train_test_split
+from handle_imbalance import Imbalance
 
 import wandb
 from wandb.keras import WandbCallback
@@ -26,7 +27,9 @@ class TfNet:
         X = self.data.iloc[:, 1:6]
         y = self.data['label']
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+        X_resampled, y_resampled = Imbalance()('all_knn', X, y)
+
+        X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.3, random_state=42)
         # np.save('X_test.npy', X_test)
         # np.save('y_test.npy', y_test)
         return X_train, X_test, y_train, y_test

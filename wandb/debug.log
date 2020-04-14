@@ -1,40 +1,37 @@
-2020-04-12 18:56:13,818 DEBUG   MainThread:5096 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
-2020-04-12 18:56:13,850 DEBUG   MainThread:5096 [meta.py:setup():97] code probe starting
-2020-04-12 18:56:13,850 DEBUG   MainThread:5096 [meta.py:setup():101] non time limited probe of code
-2020-04-12 18:56:13,860 DEBUG   MainThread:5096 [meta.py:_setup_code_git():49] probe for git information
-2020-04-12 18:56:13,988 DEBUG   MainThread:5096 [meta.py:_setup_code_program():58] save program starting
-2020-04-12 18:56:13,988 DEBUG   MainThread:5096 [meta.py:_setup_code_program():60] save program starting: e:\Btech project\leaf-disease\Classification.py
-2020-04-12 18:56:14,000 DEBUG   MainThread:5096 [meta.py:_setup_code_program():65] save program saved: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\code\Classification.py
-2020-04-12 18:56:14,000 DEBUG   MainThread:5096 [meta.py:_setup_code_program():67] save program
-2020-04-12 18:56:14,008 DEBUG   MainThread:5096 [meta.py:setup():119] code probe done
-2020-04-12 18:56:14,024 DEBUG   MainThread:5096 [run_manager.py:__init__():545] Initialized sync for leaf_disease/3luf6x63
-2020-04-12 18:56:14,031 INFO    MainThread:5096 [run_manager.py:wrap_existing_process():1148] wrapping existing process 1744
-2020-04-12 18:56:14,240 INFO    MainThread:5096 [run_manager.py:init_run():928] system metrics and metadata threads started
-2020-04-12 18:56:14,240 INFO    MainThread:5096 [run_manager.py:init_run():967] upserting run before process can begin, waiting at most 10 seconds
-2020-04-12 18:56:14,845 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\config.yaml
-2020-04-12 18:56:15,353 INFO    Thread-20 :5096 [run_manager.py:_upsert_run():1052] saving patches
-2020-04-12 18:56:19,871 INFO    Thread-20 :5096 [run_manager.py:_upsert_run():1056] saving pip packages
-2020-04-12 18:56:19,878 INFO    Thread-20 :5096 [run_manager.py:_upsert_run():1058] initializing streaming files api
-2020-04-12 18:56:19,879 INFO    Thread-20 :5096 [run_manager.py:_upsert_run():1065] unblocking file change observer, beginning sync with W&B servers
-2020-04-12 18:56:19,879 INFO    MainThread:5096 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
-2020-04-12 18:56:19,887 INFO    MainThread:5096 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
-2020-04-12 18:56:20,241 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\output.log
-2020-04-12 18:56:20,242 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\code\Classification.py
-2020-04-12 18:56:20,243 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\wandb-metadata.json
-2020-04-12 18:56:20,243 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\code
-2020-04-12 18:56:20,243 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\diff.patch
-2020-04-12 18:56:20,244 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\upstream_diff_0530406a62438c76b4717dd938ef2448ce93e473.patch
-2020-04-12 18:56:20,244 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\upstream_diff_0530406a62438c76b4717dd938ef2448ce93e473.patch
-2020-04-12 18:56:20,608 INFO    MainThread:5096 [run_manager.py:_sync_etc():1295] received message from user process: {"exitcode": 0}
-2020-04-12 18:56:20,610 INFO    MainThread:5096 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
-2020-04-12 18:56:20,615 INFO    MainThread:5096 [run_manager.py:shutdown():1072] shutting down system stats and metadata service
-2020-04-12 18:56:20,867 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\output.log
-2020-04-12 18:56:20,868 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\config.yaml
-2020-04-12 18:56:20,870 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\upstream_diff_0530406a62438c76b4717dd938ef2448ce93e473.patch
-2020-04-12 18:56:20,871 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\requirements.txt
-2020-04-12 18:56:20,874 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\wandb-events.jsonl
-2020-04-12 18:56:21,254 INFO    MainThread:5096 [run_manager.py:shutdown():1084] stopping streaming files and file change observer
-2020-04-12 18:56:21,869 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\wandb-metadata.json
-se\wandb\run-20200412_132612-3luf6x63\wandb-events.jsonl
-2020-04-12 18:56:21,254 INFO    MainThread:5096 [3luf6x63:run_manager.py:shutdown():1084] stopping streaming files and file change observer
-2020-04-12 18:56:21,869 INFO    Thread-7  :5096 [3luf6x63:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\wandb-metadata.json
+2020-04-14 18:52:34,961 DEBUG   MainThread:19948 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
+2020-04-14 18:52:34,998 DEBUG   MainThread:19948 [meta.py:setup():97] code probe starting
+2020-04-14 18:52:34,998 DEBUG   MainThread:19948 [meta.py:setup():101] non time limited probe of code
+2020-04-14 18:52:35,005 DEBUG   MainThread:19948 [meta.py:_setup_code_git():49] probe for git information
+2020-04-14 18:52:35,089 DEBUG   MainThread:19948 [meta.py:_setup_code_program():58] save program starting
+2020-04-14 18:52:35,089 DEBUG   MainThread:19948 [meta.py:_setup_code_program():60] save program starting: e:\Btech project\leaf-disease\tempCodeRunnerFile.py
+2020-04-14 18:52:35,112 DEBUG   MainThread:19948 [meta.py:_setup_code_program():65] save program saved: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\code\tempCodeRunnerFile.py
+2020-04-14 18:52:35,112 DEBUG   MainThread:19948 [meta.py:_setup_code_program():67] save program
+2020-04-14 18:52:35,116 DEBUG   MainThread:19948 [meta.py:setup():119] code probe done
+2020-04-14 18:52:35,127 DEBUG   MainThread:19948 [run_manager.py:__init__():545] Initialized sync for leaf_disease/3l69llv5
+2020-04-14 18:52:35,133 INFO    MainThread:19948 [run_manager.py:wrap_existing_process():1148] wrapping existing process 24136
+2020-04-14 18:52:35,783 INFO    MainThread:19948 [run_manager.py:init_run():928] system metrics and metadata threads started
+2020-04-14 18:52:35,788 INFO    MainThread:19948 [run_manager.py:init_run():967] upserting run before process can begin, waiting at most 10 seconds
+2020-04-14 18:52:35,985 INFO    Thread-7  :19948 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\config.yaml
+2020-04-14 18:52:36,401 INFO    Thread-20 :19948 [run_manager.py:_upsert_run():1052] saving patches
+2020-04-14 18:52:36,850 INFO    Thread-20 :19948 [run_manager.py:_upsert_run():1056] saving pip packages
+2020-04-14 18:52:36,855 INFO    Thread-20 :19948 [run_manager.py:_upsert_run():1058] initializing streaming files api
+2020-04-14 18:52:36,856 INFO    Thread-20 :19948 [run_manager.py:_upsert_run():1065] unblocking file change observer, beginning sync with W&B servers
+2020-04-14 18:52:36,856 INFO    MainThread:19948 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
+2020-04-14 18:52:36,866 INFO    MainThread:19948 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
+2020-04-14 18:52:36,872 INFO    MainThread:19948 [run_manager.py:_sync_etc():1295] received message from user process: {"exitcode": 0}
+2020-04-14 18:52:36,875 INFO    MainThread:19948 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
+2020-04-14 18:52:36,877 INFO    MainThread:19948 [run_manager.py:shutdown():1072] shutting down system stats and metadata service
+2020-04-14 18:52:37,800 INFO    MainThread:19948 [run_manager.py:shutdown():1084] stopping streaming files and file change observer
+2020-04-14 18:52:37,837 INFO    MainThread:19948 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\output.log
+2020-04-14 18:52:37,837 INFO    MainThread:19948 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\code\tempCodeRunnerFile.py
+2020-04-14 18:52:37,838 INFO    MainThread:19948 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\wandb-metadata.json
+2020-04-14 18:52:37,838 INFO    MainThread:19948 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\code
+2020-04-14 18:52:37,838 INFO    MainThread:19948 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\output.log
+2020-04-14 18:52:37,839 INFO    MainThread:19948 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\config.yaml
+2020-04-14 18:52:37,839 INFO    MainThread:19948 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\wandb-events.jsonl
+2020-04-14 18:52:37,840 INFO    MainThread:19948 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\upstream_diff_bcc5b1d18d80b9dc0240be5884b1849a025e4da6.patch
+2020-04-14 18:52:37,840 INFO    MainThread:19948 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\requirements.txt
+2020-04-14 18:52:37,841 INFO    MainThread:19948 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\diff.patch
+2020-04-14 18:52:37,841 INFO    MainThread:19948 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\wandb-metadata.json
+8:52:37,841 INFO    MainThread:19948 [3l69llv5:run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\diff.patch
+2020-04-14 18:52:37,841 INFO    MainThread:19948 [3l69llv5:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200414_132233-3l69llv5\wandb-metadata.json

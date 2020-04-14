@@ -1,0 +1,24 @@
+{
+    "root": "E:/Btech project/leaf-disease",
+    "program": "e:\\Btech project\\leaf-disease\\tempCodeRunnerFile.py",
+    "git": {
+        "remote": "https://github.com/Abhiswain97/Leaf_disease_detection.git",
+        "commit": "627ef0ec32523fd88b5b115ee8b1fab2452b42a4"
+    },
+    "email": "abhiswain.it.2016@gmail.com",
+    "codePath": "tempCodeRunnerFile.py",
+    "startedAt": "2020-04-14T13:22:34.249881",
+    "host": "LAPTOP-SJKV0KE7",
+    "username": "AbhishekSwain",
+    "executable": "C:\\Users\\Abhishek Swain\\miniconda3\\envs\\myenv\\python.exe",
+    "os": "Windows-10-10.0.18362-SP0",
+    "python": "3.8.2",
+    "cpu_count": 8,
+    "args": [],
+    "state": "finished",
+    "jobType": null,
+    "mode": "run",
+    "project": "leaf_disease",
+    "heartbeatAt": "2020-04-14T13:22:37.784484",
+    "exitcode": 0
+}

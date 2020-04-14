@@ -1,0 +1,218 @@
+diff --git a/Classification.py b/Classification.py
+index 8a1a5cf9..7dd6a7d0 100644
+--- a/Classification.py
++++ b/Classification.py
+@@ -10,6 +10,7 @@ import pandas as pd
+ import metrics
+ 
+ from metrics import ClassificationMetrics
++from handle_imbalance import Imbalance
+ 
+ from sklearn.model_selection import train_test_split
+ from sklearn import linear_model, tree, ensemble, metrics
+@@ -21,7 +22,7 @@ import functools
+ import time
+ import warnings
+ 
+-# import model_tf
++import model_tf
+ 
+ warnings.filterwarnings('ignore')
+ 
+@@ -134,28 +135,26 @@ class Classify:
+         X = df.iloc[:, 1:5].values
+         y = df['label'].values
+ 
+-        # rus = RandomUnderSampler(random_state=0)
+-        ens = EditedNearestNeighbours()
+-        # X_resampled, y_resampled = rus.fit_resample(X, y)
+-        X_resampled, y_resampled = ens.fit_resample(X, y)
+-
+-        X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25, random_state=42)
+-        # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)      
+-        # print('Random forest')
+-        # rfc = self.models['random_forest'].fit(X_train, y_train)
+-        # print('f1_score: ', self.metrics('f1_score', y_test, rfc.predict(X_test)))
+-        # print('precision: ', self.metrics('precision', y_test, rfc.predict(X_test)))
+-        # print('recall: ', self.metrics('recall', y_test, rfc.predict(X_test)))
+-
+-        print('XGBoost')
+-        model = XGBClassifier()
+-        model.fit(X_train, y_train)
+-        metric = ClassificationMetrics()
+-        print('Accuracy score: ', metric('accuracy', y_test, model.predict(X_test)))
+-        print('Precision score: ', metric('precision', y_test, model.predict(X_test)))
+-        print('Recall score: ', metric('recall', y_test, model.predict(X_test)))
+-
+-        # self.plot_cm(y_test, model.predict(X_test))
++        undersamplers = list(Imbalance().under_samplers.keys())
++
++        for undersampler in undersamplers:
++
++            X_resampled, y_resampled = Imbalance()(undersampler, X, y)
++
++            X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25,
++                                                                random_state=42)
++            
++            print(f'Using {undersampler}')
++            print('XGBoost')
++            model = XGBClassifier()
++            model.fit(X_resampled, y_resampled)
++            metric = ClassificationMetrics()
++            print('Accuracy score: ', metric('accuracy', y_test, model.predict(X_test)))
++            print('Precision score: ', metric('precision', y_test, model.predict(X_test)))
++            print('Recall score: ', metric('recall', y_test, model.predict(X_test)))
++            print('Log loss: ', metric('logloss', y_test, None, model.predict_proba(X_test)))
++
++            self.plot_cm(y_test, model.predict(X_test))
+ 
+         # y_pred = model.predict(X_test)
+         # disease = {}
+@@ -174,7 +173,7 @@ class Classify:
+ 
+     def NeuralNet(self):
+ 
+-        tfnet = model_tf.TfNet(self.file, 500, 32)
++        tfnet = model_tf.TfNet('features(binary_classify).csv', 20, 32)
+         model = tfnet.model()
+         history = tfnet.train(model)
+         # tfnet.plot(history)
+@@ -214,8 +213,8 @@ class Classify:
+ if __name__ == '__main__':
+     cl = Classify()
+     # cl.glcm()
+-    cl.classifier('features(binary_classify).csv')
++    # cl.classifier('features(binary_classify).csv')
+     # cl.make_label()
+     # cl.mask_predict()
+     # cl.make_json()
+-    # nn = memory.cache(cl.NeuralNet())
++    nn = memory.cache(cl.NeuralNet())
+diff --git a/__pycache__/model_tf.cpython-38.pyc b/__pycache__/model_tf.cpython-38.pyc
+index b1817927..46f08d1e 100644
+Binary files a/__pycache__/model_tf.cpython-38.pyc and b/__pycache__/model_tf.cpython-38.pyc differ
+diff --git a/handle_imbalance.py b/handle_imbalance.py
+index 02414279..a785e1f9 100644
+--- a/handle_imbalance.py
++++ b/handle_imbalance.py
+@@ -19,22 +19,22 @@ class Imbalance:
+ 
+     @staticmethod
+     def _all_knn(X, y):
+-        return under_sampling.AllKNN().fit(X=X, y=y)
++        return under_sampling.AllKNN().fit_resample(X=X, y=y)
+ 
+     @staticmethod
+     def _condensed_nearest_neighbour(X, y):
+-        return under_sampling.CondensedNearestNeighbour().fit(X=X, y=y)
++        return under_sampling.CondensedNearestNeighbour().fit_resample(X=X, y=y)
+ 
+     @staticmethod
+     def _edited_nearest_neighbours(X, y):
+-        return under_sampling.EditedNearestNeighbours().fit(X=X, y=y)
++        return under_sampling.EditedNearestNeighbours().fit_resample(X=X, y=y)
+ 
+     @staticmethod
+     def _repeated_edited_nearest_neighbours(X, y):
+-        return under_sampling.RepeatedEditedNearestNeighbours().fit(X=X, y=y)
++        return under_sampling.RepeatedEditedNearestNeighbours().fit_resample(X=X, y=y)
+ 
+     @staticmethod
+     def _random_under_sampler(X, y):
+-        return under_sampling.RandomUnderSampler().fit(X=X, y=y)
++        return under_sampling.RandomUnderSampler().fit_resample(X=X, y=y)
+ 
+ 
+diff --git a/model_tf.py b/model_tf.py
+index d9916b98..e81d2adb 100644
+--- a/model_tf.py
++++ b/model_tf.py
+@@ -8,6 +8,7 @@ from tensorflow.keras.callbacks import CSVLogger
+ from tensorflow.keras.layers import Dense
+ from tensorflow.keras.models import Sequential
+ from sklearn.model_selection import train_test_split
++from handle_imbalance import Imbalance
+ 
+ import wandb
+ from wandb.keras import WandbCallback
+@@ -26,7 +27,9 @@ class TfNet:
+         X = self.data.iloc[:, 1:6]
+         y = self.data['label']
+ 
+-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
++        X_resampled, y_resampled = Imbalance()('all_knn', X, y)
++
++        X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.3, random_state=42)
+         # np.save('X_test.npy', X_test)
+         # np.save('y_test.npy', y_test)
+         return X_train, X_test, y_train, y_test
+diff --git a/tempCodeRunnerFile.py b/tempCodeRunnerFile.py
+deleted file mode 100644
+index 0aca4de3..00000000
+--- a/tempCodeRunnerFile.py
++++ /dev/null
+@@ -1 +0,0 @@
+-self
+\ No newline at end of file
+diff --git a/wandb/debug.log b/wandb/debug.log
+index 9cf765d8..ade2bd5e 100644
+--- a/wandb/debug.log
++++ b/wandb/debug.log
+@@ -1,40 +1,17 @@
+-2020-04-12 18:56:13,818 DEBUG   MainThread:5096 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
+-2020-04-12 18:56:13,850 DEBUG   MainThread:5096 [meta.py:setup():97] code probe starting
+-2020-04-12 18:56:13,850 DEBUG   MainThread:5096 [meta.py:setup():101] non time limited probe of code
+-2020-04-12 18:56:13,860 DEBUG   MainThread:5096 [meta.py:_setup_code_git():49] probe for git information
+-2020-04-12 18:56:13,988 DEBUG   MainThread:5096 [meta.py:_setup_code_program():58] save program starting
+-2020-04-12 18:56:13,988 DEBUG   MainThread:5096 [meta.py:_setup_code_program():60] save program starting: e:\Btech project\leaf-disease\Classification.py
+-2020-04-12 18:56:14,000 DEBUG   MainThread:5096 [meta.py:_setup_code_program():65] save program saved: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\code\Classification.py
+-2020-04-12 18:56:14,000 DEBUG   MainThread:5096 [meta.py:_setup_code_program():67] save program
+-2020-04-12 18:56:14,008 DEBUG   MainThread:5096 [meta.py:setup():119] code probe done
+-2020-04-12 18:56:14,024 DEBUG   MainThread:5096 [run_manager.py:__init__():545] Initialized sync for leaf_disease/3luf6x63
+-2020-04-12 18:56:14,031 INFO    MainThread:5096 [run_manager.py:wrap_existing_process():1148] wrapping existing process 1744
+-2020-04-12 18:56:14,240 INFO    MainThread:5096 [run_manager.py:init_run():928] system metrics and metadata threads started
+-2020-04-12 18:56:14,240 INFO    MainThread:5096 [run_manager.py:init_run():967] upserting run before process can begin, waiting at most 10 seconds
+-2020-04-12 18:56:14,845 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\config.yaml
+-2020-04-12 18:56:15,353 INFO    Thread-20 :5096 [run_manager.py:_upsert_run():1052] saving patches
+-2020-04-12 18:56:19,871 INFO    Thread-20 :5096 [run_manager.py:_upsert_run():1056] saving pip packages
+-2020-04-12 18:56:19,878 INFO    Thread-20 :5096 [run_manager.py:_upsert_run():1058] initializing streaming files api
+-2020-04-12 18:56:19,879 INFO    Thread-20 :5096 [run_manager.py:_upsert_run():1065] unblocking file change observer, beginning sync with W&B servers
+-2020-04-12 18:56:19,879 INFO    MainThread:5096 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
+-2020-04-12 18:56:19,887 INFO    MainThread:5096 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
+-2020-04-12 18:56:20,241 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\output.log
+-2020-04-12 18:56:20,242 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\code\Classification.py
+-2020-04-12 18:56:20,243 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\wandb-metadata.json
+-2020-04-12 18:56:20,243 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\code
+-2020-04-12 18:56:20,243 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\diff.patch
+-2020-04-12 18:56:20,244 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\upstream_diff_0530406a62438c76b4717dd938ef2448ce93e473.patch
+-2020-04-12 18:56:20,244 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\upstream_diff_0530406a62438c76b4717dd938ef2448ce93e473.patch
+-2020-04-12 18:56:20,608 INFO    MainThread:5096 [run_manager.py:_sync_etc():1295] received message from user process: {"exitcode": 0}
+-2020-04-12 18:56:20,610 INFO    MainThread:5096 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
+-2020-04-12 18:56:20,615 INFO    MainThread:5096 [run_manager.py:shutdown():1072] shutting down system stats and metadata service
+-2020-04-12 18:56:20,867 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\output.log
+-2020-04-12 18:56:20,868 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\config.yaml
+-2020-04-12 18:56:20,870 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\upstream_diff_0530406a62438c76b4717dd938ef2448ce93e473.patch
+-2020-04-12 18:56:20,871 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\requirements.txt
+-2020-04-12 18:56:20,874 INFO    Thread-7  :5096 [run_manager.py:_on_file_created():681] file/dir created: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\wandb-events.jsonl
+-2020-04-12 18:56:21,254 INFO    MainThread:5096 [run_manager.py:shutdown():1084] stopping streaming files and file change observer
+-2020-04-12 18:56:21,869 INFO    Thread-7  :5096 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\wandb-metadata.json
+-se\wandb\run-20200412_132612-3luf6x63\wandb-events.jsonl
+-2020-04-12 18:56:21,254 INFO    MainThread:5096 [3luf6x63:run_manager.py:shutdown():1084] stopping streaming files and file change observer
+-2020-04-12 18:56:21,869 INFO    Thread-7  :5096 [3luf6x63:run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200412_132612-3luf6x63\wandb-metadata.json
++2020-04-14 18:49:14,891 DEBUG   MainThread:15020 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
++2020-04-14 18:49:14,913 DEBUG   MainThread:15020 [meta.py:setup():97] code probe starting
++2020-04-14 18:49:14,913 DEBUG   MainThread:15020 [meta.py:setup():101] non time limited probe of code
++2020-04-14 18:49:14,922 DEBUG   MainThread:15020 [meta.py:_setup_code_git():49] probe for git information
++2020-04-14 18:49:15,013 DEBUG   MainThread:15020 [meta.py:_setup_code_program():58] save program starting
++2020-04-14 18:49:15,013 DEBUG   MainThread:15020 [meta.py:_setup_code_program():60] save program starting: e:\Btech project\leaf-disease\Classification.py
++2020-04-14 18:49:15,042 DEBUG   MainThread:15020 [meta.py:_setup_code_program():65] save program saved: E:\Btech project\leaf-disease\wandb\run-20200414_131913-2gy7zqao\code\Classification.py
++2020-04-14 18:49:15,042 DEBUG   MainThread:15020 [meta.py:_setup_code_program():67] save program
++2020-04-14 18:49:15,047 DEBUG   MainThread:15020 [meta.py:setup():119] code probe done
++2020-04-14 18:49:15,059 DEBUG   MainThread:15020 [run_manager.py:__init__():545] Initialized sync for leaf_disease/2gy7zqao
++2020-04-14 18:49:15,063 INFO    MainThread:15020 [run_manager.py:wrap_existing_process():1148] wrapping existing process 5696
++2020-04-14 18:49:15,912 INFO    Thread-7  :15020 [run_manager.py:_on_file_modified():692] file/dir modified: E:\Btech project\leaf-disease\wandb\run-20200414_131913-2gy7zqao\config.yaml
++2020-04-14 18:49:16,030 INFO    MainThread:15020 [run_manager.py:init_run():928] system metrics and metadata threads started
++2020-04-14 18:49:16,030 INFO    MainThread:15020 [run_manager.py:init_run():967] upserting run before process can begin, waiting at most 10 seconds
++2020-04-14 18:49:16,476 INFO    Thread-20 :15020 [run_manager.py:_upsert_run():1052] saving patches
++020 [2gy7zqao:run_manager.py:init_run():967] upserting run before process can begin, waiting at most 10 seconds
++2020-04-14 18:49:16,476 INFO    Thread-20 :15020 [2gy7zqao:run_manager.py:_upsert_run():1052] saving patches
