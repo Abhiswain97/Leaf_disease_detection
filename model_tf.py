@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.layers import Dense
@@ -12,9 +13,8 @@ from handle_imbalance import Imbalance
 
 import wandb
 from wandb.keras import WandbCallback
+from tensorflow.python.keras.callbacks import EarlyStopping
 wandb.init(project="leaf_disease")
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 class TfNet:
@@ -27,7 +27,7 @@ class TfNet:
         X = self.data.iloc[:, 1:6]
         y = self.data['label']
 
-        X_resampled, y_resampled = Imbalance()('all_knn', X, y)
+        X_resampled, y_resampled = Imbalance()('repeated_edited_nearest_neighbours', X, y)
 
         X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.3, random_state=42)
         # np.save('X_test.npy', X_test)
@@ -38,8 +38,8 @@ class TfNet:
         model = Sequential(
             [Dense(16, input_dim=5, activation='relu'),
              Dense(32, activation='relu'),
-             # Dense(128, activation='relu'),
-             # Dense(64, activation='relu'),
+             Dense(128, activation='relu'),
+             Dense(64, activation='relu'),
              Dense(3, activation='softmax')]
         )
         return model
@@ -49,12 +49,12 @@ class TfNet:
         model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['sparse_categorical_accuracy'])
         csv_logger = CSVLogger('training.csv', separator=',')
         history = model.fit(X_train, y_train,
-                            validation_split=0.33,
+                            validation_data=(X_test, y_test),
                             epochs=self.epochs,
                             batch_size=self.batch_size,
                             verbose=1,
                             shuffle=True,
-                            callbacks=[csv_logger, WandbCallback()])
+                            callbacks=[csv_logger, WandbCallback(), EarlyStopping(monitor='val_loss', mode='min', verbose=1)])
         # print(history.history.keys())
 
         # model_json = model.to_json()

@@ -1,5 +1,3 @@
-from joblib import Memory, Parallel, delayed
-import joblib
 import os
 import pickle
 import json
@@ -17,8 +15,6 @@ from handle_imbalance import Imbalance
 
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn import linear_model, tree, ensemble, metrics
-from skopt import BayesSearchCV
-import xgboost as xgb
 from xgboost import XGBClassifier
 from catboost import CatBoostClassifier, Pool, cv
 
@@ -28,9 +24,11 @@ import functools
 import time
 import warnings
 
-# import model_tf
+import model_tf
 
 warnings.filterwarnings('ignore')
+import joblib
+from joblib import Memory, Parallel, delayed
 
 location = 'cachedir'
 memory = Memory(location, verbose=0)
@@ -47,10 +45,23 @@ class Classify:
         self.contrast = []
         self.path = 'Labels\\RGB_superpixels'
         self.mask_label_path = 'Labels\\mask_ground_truth'
-        self.binary_labels = np.load(
-            'Labels\\RGB_superpixels\\binary_labels(RGB).npy')
-        self.multiclass_labels = np.load(
-            'Labels\\RGB_superpixels\\multiclass_labels(RGB).npy')
+        self.binary_labels = np.load('Labels\\RGB_superpixels\\binary_labels(RGB).npy')
+        self.multiclass_labels = np.load('Labels\\RGB_superpixels\\multiclass_labels(RGB).npy')
+
+    def create_folds(self, file):
+        df = pd.read_csv(file)
+        df["kfold"] = -1
+
+        df = df.sample(frac=1).reset_index(drop=True)
+
+        kf = StratifiedKFold(n_splits=5)
+
+        for fold, (trn_, val_) in enumerate(kf.split(X = df.iloc[:, 1:5].values, y=df['label'].values)):
+            print(len(trn_), len(val_))
+            df.loc[val_, 'kfold'] = fold
+    
+        df.to_csv("train_folds.csv", index=False)
+        
 
     def plot_cm(self, y_true, y_pred, figsize=(10, 10)):
         cm = metrics.confusion_matrix(y_true, y_pred, labels=np.unique(y_true))
@@ -110,119 +121,91 @@ class Classify:
                 print(file1.split('_')[-1], file2.split('_')[-1])
                 print(file1[:file1.rindex('_')], file2[:file2.rindex('_')])
                 if file1[:file1.rindex('_')] == file2[:file2.rindex('_')] and file1.split('_')[-1] == 'multiclass.npy':
-                    spxl = np.load(os.path.join(
-                        'Labels\\RGB_superpixels', file1))
+                    spxl = np.load(os.path.join('Labels\\RGB_superpixels', file1))
                     R = spxl[:, :, 0].flatten()
                     G = spxl[:, :, 1].flatten()
                     B = spxl[:, :, 2].flatten()
                     for r, g, b in zip(R, G, B):
                         X.append([r, g, b])
-                    y = np.load(os.path.join(
-                        'Labels\\mask_ground_truth', file2)).flatten()
+                    y = np.load(os.path.join('Labels\\mask_ground_truth', file2)).flatten()
                     print(len(X), len(y))
 
-                    X_resampled, y_resampled = Imbalance()(
-                        'repeated_edited_nearest_neighbours', X, y)
+                    X_resampled, y_resampled = Imbalance()('repeated_edited_nearest_neighbours', X, y)
 
-                    X_train, X_test, y_train, y_test = train_test_split(
-                        X_resampled, y_resampled, test_size=0.25, random_state=42)
+                    X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25, random_state=42)
                     print('Random forest')
                     rfc = self.models['random_forest'].fit(X_train, y_train)
-                    print('f1_score: ', self.metrics(
-                        'f1_score', y_test, rfc.predict(X_test)))
-                    print('precision: ', self.metrics(
-                        'precision', y_test, rfc.predict(X_test)))
-                    print('recall: ', self.metrics(
-                        'recall', y_test, rfc.predict(X_test)))
-                    print('accuracy', metrics.accuracy_score(
-                        y_test, rfc.predict(X_test)))
+                    print('f1_score: ', self.metrics('f1_score', y_test, rfc.predict(X_test)))
+                    print('precision: ', self.metrics('precision', y_test, rfc.predict(X_test)))
+                    print('recall: ', self.metrics('recall', y_test, rfc.predict(X_test)))
+                    print('accuracy', metrics.accuracy_score(y_test, rfc.predict(X_test)))
                     print(y_test)
 
-    def bay_optimization(self, X_train, y_train, is_binary=True):
-        if is_binary:
-            name = 'binary'
-            objective = 'binary:logistic'
-            eval_metric = 'auc'
-            scoring = 'roc_auc'
-            m_name = 'roc_auc'
-        else:
-            name = 'multiclass'
-            objective = 'multi:softmax'
-            eval_metric = 'mlogloss'
-            scoring = metrics.make_scorer(metrics.f1_score, average='weighted')
-            m_name = 'f1'
-
-
-        bayes_cv_tuner = BayesSearchCV(
-            estimator=xgb.XGBClassifier(
-                n_jobs=1,
-                objective=objective,
-                eval_metric=eval_metric,
-                silent=1,
-                tree_method='approx',
-                n_estimators=200
-            ),
-            search_spaces={
-                'learning_rate': (0.01, 1.0, 'log-uniform'),
-                'max_depth': (1, 50),
-                'n_estimators': (50, 100),
-            },
-            scoring=scoring,
-            cv=StratifiedKFold(
-                n_splits=3,
-                shuffle=True,
-                random_state=42
-            ),
-            n_jobs=3,
-            n_iter=10,
-            verbose=3,
-            refit=True,
-            random_state=42
-        )
-
-        def status_print(optim_result):
-            all_models = pd.DataFrame(bayes_cv_tuner.cv_results_)
-
-            best_params = pd.Series(bayes_cv_tuner.best_params_)
-            print('Model #{}\nBest {}: {}\nBest params: {}\n'.format(
-                len(all_models),
-                m_name,
-                np.round(bayes_cv_tuner.best_score_, 4),
-                bayes_cv_tuner.best_params_
-            ))
-
-            # Save all model results
-            clf_name = bayes_cv_tuner.estimator.__class__.__name__
-            all_models.to_csv('results\\' + clf_name + f"({name})_cv_results.csv")
-        
-        return bayes_cv_tuner.fit(X_train, y_train, callback=status_print)
-
-    def classifier(self, file, cls_name):
+    def classifier(self, file):
         df = pd.read_csv(file)
 
         names = df['name'].values
         X = df.iloc[:, 1:5].values
         y = df['label'].values
 
-        X_resampled, y_resampled = Imbalance()(
-            'repeated_edited_nearest_neighbours', X, y)
+        X_resampled, y_resampled = Imbalance()('repeated_edited_nearest_neighbours', X, y)
 
         X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25,
                                                             random_state=42)
 
         print(f'Using repeated_edited_nearest_neighbours')
 
-        if cls_name == 'B':
-            best_model = self.bayes_optimization(X_train, y_train)
-        else:
-            best_model = self.bayes_optimization(X_train, y_train, False)
+        for model in ['CatBoost', 'XGBoost']:
+            if model == 'Cat':
+                print('CatBoost')
+                cat_model = CatBoostClassifier(
+                    iterations=1000, 
+                    learning_rate=0.01, 
+                    loss_function='Logloss', 
+                    eval_metric='Accuracy',
+                    use_best_model=True
+                )
+                cat_model.fit(X_train, y_train, eval_set=(X_test, y_test))
 
-        print('Accuracy: ', ClassificationMetrics()('accuracy', y_test, best_model.best_estimator_.predict(X_test)))
-        self.plot_cm(y_test, best_model.predict(X_test))
+                self.plot_cm(y_test, cat_model.predict(X_test))
+
+            if model == 'XGBoost':
+
+                print('XGBoost')
+                model = XGBClassifier()
+                model.fit(X_train, y_train)
+                
+                metric = ClassificationMetrics()
+                print('Accuracy score: ', metric('accuracy', y_test, model.predict(X_test)))
+                print('Precision score: ', metric('precision', y_test, model.predict(X_test)))
+                print('Recall score: ', metric('recall', y_test, model.predict(X_test)))
+                print('Log loss: ', metric('logloss', y_test, None, model.predict_proba(X_test)))
+                print('f1 score: ', metric('f1', y_test, model.predict(X_test)))
+                
+                timestampTime = time.strftime("%H:%M:%S")
+                timestampDate = time.strftime("%d/%m/%Y")
+                timestampEND = timestampDate + '-' + timestampTime
+                
+                results = {
+                    'model': 'XGBoost',
+                    'accuracy': metric('accuracy', y_test, model.predict(X_test)),
+                    'Precision score: ': metric('precision', y_test, model.predict(X_test)),
+                    'Recall score: ': metric('recall', y_test, model.predict(X_test)),
+                    'f1 score': metric('f1', y_test, model.predict(X_test)),
+                    'under_sampler': 'repeated_edited_nearest_neighbours',
+                    'time_stamp': timestampEND
+                }
+                
+                fname = file.split('.')[0]
+                
+                with open(f'results\\{fname}-6.json', 'w') as fp:
+                    json.dump(results, fp)
+
+                self.plot_cm(y_test, model.predict(X_test))
 
     def NeuralNet(self):
 
-        tfnet = model_tf.TfNet('features(binary_classify)(RGB).csv', 200, 32)
+        tfnet = model_tf.TfNet('features(binary_classify)(RGB).csv', 100, 32)
         model = tfnet.model()
         history = tfnet.train(model)
         # tfnet.plot(history)
@@ -236,14 +219,12 @@ class Classify:
                 if len(image.shape) == 3:
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-                glcm = greycomatrix(image, distances=[1], angles=[
-                                    0], normed=True, symmetric=True)
+                glcm = greycomatrix(image, distances=[1], angles=[0], normed=True, symmetric=True)
 
                 # Feature Extraction using GLCM
                 self.name.append(file)
                 self.contrast.append(greycoprops(glcm, 'contrast')[0][0])
-                self.dissimilarity.append(
-                    greycoprops(glcm, 'dissimilarity')[0][0])
+                self.dissimilarity.append(greycoprops(glcm, 'dissimilarity')[0][0])
                 self.homogeneity.append(greycoprops(glcm, 'homogeneity')[0][0])
                 self.ASM.append(greycoprops(glcm, 'ASM')[0][0])
                 self.energy.append(greycoprops(glcm, 'energy')[0][0])
@@ -262,16 +243,11 @@ class Classify:
 
 
 if __name__ == '__main__':
-    binary_file = 'features(binary_classify)(RGB).csv'
-    multiclass_file = 'features(multiclass_classify)(RGB).csv'
     cl = Classify()
     # cl.glcm()
-    cls_name = input('Enter the type of classification from [B] or [M]: ')
-    if cls_name == 'B':
-        cl.classifier(binary_file, cls_name)
-    else:
-        cl.classifier(multiclass_file, cls_name)
+    # cl.classifier('features(binary_classify)(RGB).csv')
     # cl.make_label()
     # cl.mask_predict()
     # cl.make_json()
-    # cl.NeuralNet()
+    cl.NeuralNet()
+    # cl.create_folds('features(binary_classify)(RGB).csv')

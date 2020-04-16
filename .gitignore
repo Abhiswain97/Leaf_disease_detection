@@ -1,9 +1,13 @@
-.idea
+.idea/
 .ipynb_checkpoints
 image_superpixel_pkls/
 Labels/
 Leaf_disease/
 tflite-models/
+catboost_info/
+__pycache__/
+wandb/
+*.csv
 *.npy
 
 
