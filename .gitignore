@@ -6,6 +6,7 @@ Leaf_disease/
 tflite-models/
 catboost_info/
 __pycache__/
+cachedir/
 wandb/
 *.csv
 *.npy
