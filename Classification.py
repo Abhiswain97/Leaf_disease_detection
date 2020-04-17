@@ -105,40 +105,32 @@ class Classify:
 
     def mask_predict(self):
         X, y = [], []
-        for file1 in tqdm(os.listdir('Labels\\RGB_superpixels'), total=len(os.listdir('Labels\\RGB_superpixels'))):
-            for file2 in os.listdir('Labels\\mask_ground_truth'):
-                print(file1.split('_')[-1], file2.split('_')[-1])
-                print(file1[:file1.rindex('_')], file2[:file2.rindex('_')])
-                if file1[:file1.rindex('_')] == file2[:file2.rindex('_')] and file1.split('_')[-1] == 'multiclass.npy':
-                    spxl = np.load(os.path.join(
-                        'Labels\\RGB_superpixels', file1))
-                    R = spxl[:, :, 0].flatten()
-                    G = spxl[:, :, 1].flatten()
-                    B = spxl[:, :, 2].flatten()
-                    for r, g, b in zip(R, G, B):
-                        X.append([r, g, b])
-                    y = np.load(os.path.join(
-                        'Labels\\mask_ground_truth', file2)).flatten()
-                    print(len(X), len(y))
+        for file1 in tqdm(os.listdir('Labels\\RGB_superpixels'), total=len(os.listdir('Labels\\RGB_superpixels')),
+                          desc='RGB Superpixels'):
+            for file2 in tqdm(os.listdir('Labels\\mask_ground_truth'), desc='Ground truths'):
 
-                    X_resampled, y_resampled = Imbalance()(
-                        'repeated_edited_nearest_neighbours', X, y)
+                if file1 not in ['.gitignore', 'binary_labels(RGB).npy',
+                                 'multiclass_labels(RGB).npy'] and file2 not in ['binary_labels.json',
+                                                                                 'multiclass_labels.json',
+                                                                                 '.gitignore']:
+                    if file1[:file1.rindex('_')] == file2[:file2.rindex('_')] and file1.split('_')[-1] == 'multiclass.npy':
 
-                    X_train, X_test, y_train, y_test = train_test_split(
-                        X_resampled, y_resampled, test_size=0.25, random_state=42)
-                    print('Random forest')
-                    rfc = self.models['random_forest'].fit(X_train, y_train)
-                    print('f1_score: ', self.metrics(
-                        'f1_score', y_test, rfc.predict(X_test)))
-                    print('precision: ', self.metrics(
-                        'precision', y_test, rfc.predict(X_test)))
-                    print('recall: ', self.metrics(
-                        'recall', y_test, rfc.predict(X_test)))
-                    print('accuracy', metrics.accuracy_score(
-                        y_test, rfc.predict(X_test)))
-                    print(y_test)
+                        print(file1.split('_')[-1], file2.split('_')[-1])
 
-    def bay_optimization(self, X_train, y_train, is_binary=True):
+                        spxl = np.load(os.path.join('Labels\\RGB_superpixels', file1))
+                        R = spxl[:, :, 0].flatten()
+                        G = spxl[:, :, 1].flatten()
+                        B = spxl[:, :, 2].flatten()
+                        for r, g, b in zip(R, G, B):
+                            X.append([r, g, b])
+                        y = np.load(os.path.join(
+                            'Labels\\mask_ground_truth', file2)).flatten()
+                        # print(len(X), len(y))
+
+                        print(X)
+                        exit(0)
+
+    def bayes_optimization(self, X_train, y_train, is_binary=True):
         if is_binary:
             name = 'binary'
             objective = 'binary:logistic'
@@ -151,7 +143,6 @@ class Classify:
             eval_metric = 'mlogloss'
             scoring = metrics.make_scorer(metrics.f1_score, average='weighted')
             m_name = 'f1'
-
 
         bayes_cv_tuner = BayesSearchCV(
             estimator=xgb.XGBClassifier(
@@ -194,7 +185,7 @@ class Classify:
             # Save all model results
             clf_name = bayes_cv_tuner.estimator.__class__.__name__
             all_models.to_csv('results\\' + clf_name + f"({name})_cv_results.csv")
-        
+
         return bayes_cv_tuner.fit(X_train, y_train, callback=status_print)
 
     def classifier(self, file, cls_name):
@@ -227,6 +218,59 @@ class Classify:
         history = tfnet.train(model)
         # tfnet.plot(history)
 
+    def mask_predict(self):
+        X, y = [], []
+        for file1 in tqdm(os.listdir('Labels\\RGB_superpixels')):
+            for file2 in tqdm(os.listdir('Labels\\mask_ground_truth')):
+
+                if file1 not in ['.gitignore', 'binary_labels(RGB).npy',
+                                 'multiclass_labels(RGB).npy'] and file2 not in ['binary_labels.json',
+                                                                                 'multiclass_labels.json',
+                                                                                 '.gitignore']:
+                    if file1[:file1.rindex('_')] == file2[:file2.rindex('_')] \
+                            and file1.split('_')[-1] == 'multiclass.npy':
+                        print(file1, file2)
+
+                        # print(file1[:file1.rindex('_')], file2[:file2.rindex('_')])
+                        # print(file1.split('_')[-1], file2.split('_')[-1])
+
+                        spxl = np.load(os.path.join('Labels\\RGB_superpixels', file1))
+                        label = np.load(os.path.join('Labels\\mask_ground_truth', file2))
+                        print(spxl.shape, label.shape)
+
+                        R = spxl[:, :, 0].flatten()
+                        # print(len(R))
+
+                        G = spxl[:, :, 1].flatten()
+                        B = spxl[:, :, 2].flatten()
+                        for r, g, b in zip(R, G, B):
+                            X.append(r)
+                        y = np.load(os.path.join(
+                            'Labels\\mask_ground_truth', file2)).flatten()
+                        # print(len(X), len(y))
+
+                        # X_resampled, y_resampled = Imbalance()(
+                        #     'repeated_edited_nearest_neighbours', X, y)
+
+                        print('Before sampling: ', len(X), len(y))
+                        X_resampled, y_resampled = Imbalance()(
+                            'random_under_sampler', R.reshape(-1, 1), y)
+
+                        print('Resampling done !')
+
+                        X_train, X_test, y_train, y_test = train_test_split(
+                            R.reshape(-1, 1), y, test_size=0.25, random_state=42)
+
+                        # X_train, X_test, y_train, y_test = train_test_split(
+                        #     X_resampled, y_resampled, test_size=0.25, random_state=42)
+                        print('Splitting done ')
+
+                        # best_model = self.bayes_optimization(X_train, y_train)
+                        model = linear_model.LogisticRegression().fit(X_train, y_train)
+                        # model = linear_model.LogisticRegression().fit(X_train, y_train)
+                        print('Accuracy: ',
+                              ClassificationMetrics()('accuracy', y_test, model.predict(X_test)))
+
     @functools.lru_cache(maxsize=128)
     def glcm(self):
         for file in tqdm(os.listdir(self.path), total=len(os.listdir(self.path))):
@@ -237,7 +281,7 @@ class Classify:
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
                 glcm = greycomatrix(image, distances=[1], angles=[
-                                    0], normed=True, symmetric=True)
+                    0], normed=True, symmetric=True)
 
                 # Feature Extraction using GLCM
                 self.name.append(file)
@@ -266,12 +310,12 @@ if __name__ == '__main__':
     multiclass_file = 'features(multiclass_classify)(RGB).csv'
     cl = Classify()
     # cl.glcm()
-    cls_name = input('Enter the type of classification from [B] or [M]: ')
-    if cls_name == 'B':
-        cl.classifier(binary_file, cls_name)
-    else:
-        cl.classifier(multiclass_file, cls_name)
+    # cls_name = input('Enter the type of classification from [B] or [M]: ')
+    # if cls_name == 'B':
+    #     cl.classifier(binary_file, cls_name)
+    # else:
+    #     cl.classifier(multiclass_file, cls_name)
     # cl.make_label()
-    # cl.mask_predict()
+    cl.mask_predict()
     # cl.make_json()
     # cl.NeuralNet()
