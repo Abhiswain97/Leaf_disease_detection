@@ -1,4 +1,4 @@
-from sklearn import linear_model, ensemble, model_selection, svm
+from sklearn import linear_model, ensemble, model_selection, svm, metrics
 from skopt import BayesSearchCV
 import xgboost as xgb
 
