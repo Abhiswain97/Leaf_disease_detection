@@ -1,19 +1,16 @@
-from joblib import Memory, Parallel, delayed
 import joblib
 import os
-import csv
-import gc
 import pickle
 import json
 import glob
 import time
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import cv2
+import csv
 import pandas as pd
 import metrics
-from numba import jit, cuda
+import numpy as np
 from metrics import ClassificationMetrics
 from handle_imbalance import Imbalance
 from models import ClassificationModels
@@ -23,21 +20,15 @@ from sklearn import linear_model, tree, ensemble, metrics
 from skopt import BayesSearchCV
 import xgboost as xgb
 from xgboost import XGBClassifier
-from catboost import CatBoostClassifier, Pool, cv
 
 from skimage.feature import greycomatrix, greycoprops
 from tqdm import tqdm
-import functools
 import time
 import warnings
-import timeit
 
 # import model_tf
 
 warnings.filterwarnings('ignore')
-
-location = 'cachedir'
-memory = Memory(location, verbose=0)
 
 
 class Classify:
@@ -51,10 +42,10 @@ class Classify:
         self.contrast = []
         self.path = 'Labels\\RGB_superpixels'
         self.mask_label_path = 'Labels\\mask_ground_truth'
-        self.binary_labels = np.load(
-            'Labels\\RGB_superpixels\\binary_labels(RGB).npy')
-        self.multiclass_labels = np.load(
-            'Labels\\RGB_superpixels\\multiclass_labels(RGB).npy')
+        # self.binary_labels = np.load(
+        #     'Labels\\RGB_superpixels\\binary_labels(RGB).npy')
+        # self.multiclass_labels = np.load(
+        #     'Labels\\RGB_superpixels\\multiclass_labels(RGB).npy')
 
     def plot_cm(self, y_true, y_pred, figsize=(10, 10)):
         cm = metrics.confusion_matrix(y_true, y_pred, labels=np.unique(y_true))
@@ -122,6 +113,45 @@ class Classify:
         plt.savefig(f'results\\mask_prediction-{i + 1}.png')
         plt.show()
 
+    def classify(self, file, is_binary):
+
+        df = pd.read_csv(file)
+        X = df[['contrast', 'dissimilarity', 'homogeneity', 'ASM', 'energy']]
+        y = df['label']
+
+        X_resampled, y_resampled = Imbalance()('repeated_edited_nearest_neighbours', X, y)
+
+        X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, random_state=42, test_size=0.25)
+
+        model = ClassificationModels()('svc', X_train, y_train, is_binary)
+
+        print(ClassificationMetrics()('accuracy', y_test, model.predict(X_test)))
+
+        if is_binary == 'True':
+            results = {
+                'model': model.__class__.__name__,
+                'precision': ClassificationMetrics()('precision', y_test, model.predict(X_test)),
+                'recall': ClassificationMetrics()('recall', y_test, model.predict(X_test)),
+                'f1': ClassificationMetrics()('f1', y_test, model.predict(X_test)),
+            }
+
+            with open(f'results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json', 'w') as file:
+                json.dump(results, file)
+
+            print(f'[SAVED] results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json')
+
+        else:
+            results = {
+                'model': model.__class__.__name__,
+                'f1': ClassificationMetrics()('f1', y_test, model.predict(X_test)),
+            }
+
+            with open(f'results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json', 'w') as file:
+                json.dump(results, file)
+
+            print(f'[SAVED] results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json')
+
+
     def predict_mask(self):
         superpixel_names = sorted(glob.glob('Labels\\RGB_superpixels\\*_multiclass.npy'))
         masks = sorted(glob.glob('Labels\\mask_ground_truth\\*.npy'))
@@ -170,45 +200,6 @@ class Classify:
         #
         #     X.clear()
 
-    def classifier(self, file, cls_name):
-        df = pd.read_csv(file)
-
-        names = df['name'].values
-        X = df.iloc[:, 1:5].values
-        y = df['label'].values
-
-        print(f'Using repeated_edited_nearest_neighbours')
-
-        X_resampled, y_resampled = Imbalance()(
-            'repeated_edited_nearest_neighbours', X, y)
-
-        X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25,
-                                                            random_state=42)
-
-        # if cls_name == 'B':
-        #     best_model = ClassificationModels()('xgboost', X_train, y_train)
-        #     joblib.dump(best_model, 'results\\binary_model.pkl')
-        #     print('[SAVED] binary model')
-        #     with open('results\\binary_model_best_params.json', 'w') as outfile:
-        #         json.dump(best_model.best_params_, outfile)
-        #
-        # if cls_name == 'M':
-        #     best_model = ClassificationModels()('xgboost', X_train, y_train)
-        #     joblib.dump(best_model, 'results\\multiclass_model.pkl')
-        #     print('[SAVED] multiclass model')
-        #     with open('results\\multiclass_model_best_params.json', 'w') as outfile:
-        #         json.dump(best_model.best_params_, outfile)
-
-        model = ClassificationModels()('random_forest_cv', X_train, y_train)
-        print('Accuracy: ', ClassificationMetrics()('accuracy', y_test, model.predict(X_test)))
-
-        # model = joblib.load('results\\multiclass_model.pkl')
-        # print('[LOADED] model')
-        #
-        # print('Accuracy: ', ClassificationMetrics()('accuracy', y_test, model.predict(X_test)))
-        # print('Precision: ', ClassificationMetrics()('precision', y_test, model.predict(X_test)))
-        # self.plot_cm(y_test, best_model.predict(X_test))
-
     def NeuralNet(self):
 
         tfnet = model_tf.TfNet('features(binary_classify)(RGB).csv', 200, 32)
@@ -216,7 +207,6 @@ class Classify:
         history = tfnet.train(model)
         # tfnet.plot(history)
 
-    @functools.lru_cache(maxsize=128)
     def glcm(self):
         for file in tqdm(os.listdir(self.path), total=len(os.listdir(self.path))):
             if file.endswith('binary.npy'):
@@ -253,15 +243,14 @@ class Classify:
 if __name__ == '__main__':
     binary_file = 'features(binary_classify)(RGB).csv'
     multiclass_file = 'features(multiclass_classify)(RGB).csv'
-    cl = Classify()
-    # cl.glcm()
-    cls_name = input('Enter the type of classification from [B] or [M]: ')
-    if cls_name == 'B':
-        cl.classifier(binary_file, cls_name)
+    obj = Classify()
+    is_binary = input('Is it binary classification? [True or False]: ')
+    
+    if is_binary == True:
+        print('Binary classification!')
+        print(f'Passing file: {binary_file} and is_binary={is_binary}')
+        obj.classify(binary_file, is_binary)
     else:
-        cl.classifier(multiclass_file, cls_name)
-    # cl.predict_mask()
-    # cl.make_label()
-
-    # cl.make_json()
-    # cl.NeuralNet()
+        print('Multiclass classification!')
+        print(f'Passing file: {multiclass_file} and is_binary={is_binary}')
+        obj.classify(multiclass_file, is_binary)

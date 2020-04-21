@@ -1,13 +1,14 @@
 from sklearn import linear_model, ensemble, model_selection, svm, metrics
 from skopt import BayesSearchCV
 import xgboost as xgb
-
+import pandas as pd
+import numpy as np
 
 class ClassificationModels:
     def __init__(self):
         self.models = {
             "logistic_regression_cv": self._logistic_regression_cv,
-            "random_forest_cv": self._random_forest_cv,
+            "random_forest": self._random_forest,
             "svc": self._svc,
             "xgboost_cv": self._xgboost_cv
         }
@@ -22,10 +23,11 @@ class ClassificationModels:
                 eval_metric = 'auc'
                 scoring = 'roc_auc'
                 m_name = 'roc_auc'
+
                 if model == 'xgboost_cv':
-                    return self._xgboost_cv(X_train, y_train, objective, scoring, eval_metric, m_name, name)
-                elif model == 'random_forest_cv':
-                    return self._random_forest_cv(X_train, y_train, scoring, m_name, name)
+                    self._xgboost_cv(X_train, y_train, objective, scoring, eval_metric, m_name, name)
+                else:
+                    return self.models[model](X_train, y_train)
 
             elif not is_binary:
                 name = 'multiclass'
@@ -34,11 +36,9 @@ class ClassificationModels:
                 scoring = metrics.make_scorer(metrics.f1_score, average='weighted')
                 m_name = 'f1'
                 if model == 'xgboost_cv':
-                    return self._xgboost_cv(X_train, y_train, objective, scoring, eval_metric, m_name, name)
-                elif model == 'random_forest_cv':
-                    return self._random_forest_cv(X_train, y_train, scoring, m_name, name)
-            else:
-                return self.models[model](X_train, y_train)
+                    self._xgboost_cv(X_train, y_train, objective, scoring, eval_metric, m_name, name)
+                else:
+                    return self.models[model](X_train, y_train)
 
     @staticmethod
     def _logistic_regression_cv(X_train, y_train):
@@ -47,45 +47,12 @@ class ClassificationModels:
                 n_splits=3,
                 shuffle=True,
                 random_state=42
-            )
+            ),verbose=1
         ).fit(X_train, y_train)
 
     @staticmethod
-    def _random_forest_cv(X_train, y_train, scoring, m_name, name):
-        def status_print(optim_result):
-            all_models = pd.DataFrame(bayes_cv_tuner.cv_results_)
-
-            best_params = pd.Series(bayes_cv_tuner.best_params_)
-            print('Model #{}\nBest {}: {}\nBest params: {}\n'.format(
-                len(all_models),
-                m_name,
-                np.round(bayes_cv_tuner.best_score_, 4),
-                bayes_cv_tuner.best_params_
-            ))
-
-            # Save all model results
-            clf_name = bayes_cv_tuner.estimator.__class__.__name__
-            all_models.to_csv('results\\' + clf_name + f"({name})_cv_results.csv")
-
-        return BayesSearchCV(
-            estimator=ensemble.RandomForestClassifier(),
-            search_spaces={
-                'learning_rate': (0.01, 1.0, 'log-uniform'),
-                'max_depth': (1, 50),
-                'n_estimators': (50, 100),
-            },
-            scoring=scoring,
-            cv=StratifiedKFold(
-                n_splits=3,
-                shuffle=True,
-                random_state=42
-            ),
-            n_jobs=3,
-            n_iter=10,
-            verbose=3,
-            refit=True,
-            random_state=42
-        ).fit(X_train, y_train, callback=status_print)
+    def _random_forest(X_train, y_train):
+        return ensemble.RandomForestClassifier().fit(X_train, y_train)
 
     @staticmethod
     def _xgboost_cv(X_train, y_train, objective, scoring, eval_metric, m_name, name):
@@ -104,7 +71,7 @@ class ClassificationModels:
             clf_name = bayes_cv_tuner.estimator.__class__.__name__
             all_models.to_csv('results\\' + clf_name + f"({name})_cv_results.csv")
 
-        return BayesSearchCV(
+        bayes_cv_tuner = BayesSearchCV(
             estimator=xgb.XGBClassifier(
                 n_jobs=1,
                 objective=objective,
@@ -119,7 +86,7 @@ class ClassificationModels:
                 'n_estimators': (50, 100),
             },
             scoring=scoring,
-            cv=StratifiedKFold(
+            cv=model_selection.StratifiedKFold(
                 n_splits=3,
                 shuffle=True,
                 random_state=42
@@ -129,7 +96,9 @@ class ClassificationModels:
             verbose=3,
             refit=True,
             random_state=42
-        ).fit(X_train, y_train, callback=status_print)
+        )
+
+        return bayes_cv_tuner.fit(X_train, y_train, callback=status_print)
 
     @staticmethod
     def _svc(X_train, y_train):

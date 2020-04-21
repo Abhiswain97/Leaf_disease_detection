@@ -38,7 +38,7 @@ class ClassificationMetrics:
 
     @staticmethod
     def _f1(y_true, y_pred):
-        return skmetrics.f1_score(y_true=y_true, y_pred=y_pred)
+        return skmetrics.f1_score(y_true=y_true, y_pred=y_pred, average='weighted')
 
     @staticmethod
     def _recall(y_true, y_pred):
