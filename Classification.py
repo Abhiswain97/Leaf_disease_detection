@@ -16,6 +16,7 @@ import metrics
 from numba import jit, cuda
 from metrics import ClassificationMetrics
 from handle_imbalance import Imbalance
+from models import ClassificationModels
 
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn import linear_model, tree, ensemble, metrics
@@ -161,71 +162,13 @@ class Classify:
         #         X.append([R, G, B])
         #
         #     y_true = np.load(masks[index])
-        #     y_pred = model.predict(X)
+        #     y_train = model.predict(X)
         #
-        #     y_pred = np.asarray(y_pred)
+        #     y_train = np.asarray(y_train)
         #
-        #     self.visualize_predictions(y_true, y_pred.reshape((image.shape[0], image.shape[1])), i)
+        #     self.visualize_predictions(y_true, y_train.reshape((image.shape[0], image.shape[1])), i)
         #
         #     X.clear()
-
-    def bayes_optimization(self, X_train, y_train, is_binary=True):
-        if is_binary:
-            name = 'binary'
-            objective = 'binary:logistic'
-            eval_metric = 'auc'
-            scoring = 'roc_auc'
-            m_name = 'roc_auc'
-        else:
-            name = 'multiclass'
-            objective = 'multi:softmax'
-            eval_metric = 'mlogloss'
-            scoring = metrics.make_scorer(metrics.f1_score, average='weighted')
-            m_name = 'f1'
-
-        bayes_cv_tuner = BayesSearchCV(
-            estimator=xgb.XGBClassifier(
-                n_jobs=1,
-                objective=objective,
-                eval_metric=eval_metric,
-                silent=1,
-                tree_method='approx',
-                n_estimators=200
-            ),
-            search_spaces={
-                'learning_rate': (0.01, 1.0, 'log-uniform'),
-                'max_depth': (1, 50),
-                'n_estimators': (50, 100),
-            },
-            scoring=scoring,
-            cv=StratifiedKFold(
-                n_splits=3,
-                shuffle=True,
-                random_state=42
-            ),
-            n_jobs=3,
-            n_iter=10,
-            verbose=3,
-            refit=True,
-            random_state=42
-        )
-
-        def status_print(optim_result):
-            all_models = pd.DataFrame(bayes_cv_tuner.cv_results_)
-
-            best_params = pd.Series(bayes_cv_tuner.best_params_)
-            print('Model #{}\nBest {}: {}\nBest params: {}\n'.format(
-                len(all_models),
-                m_name,
-                np.round(bayes_cv_tuner.best_score_, 4),
-                bayes_cv_tuner.best_params_
-            ))
-
-            # Save all model results
-            clf_name = bayes_cv_tuner.estimator.__class__.__name__
-            all_models.to_csv('results\\' + clf_name + f"({name})_cv_results.csv")
-
-        return bayes_cv_tuner.fit(X_train, y_train, callback=status_print)
 
     def classifier(self, file, cls_name):
         df = pd.read_csv(file)
@@ -242,19 +185,22 @@ class Classify:
         X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25,
                                                             random_state=42)
 
-        if cls_name == 'B':
-            best_model = self.bayes_optimization(X_train, y_train)
-            joblib.dump(best_model, 'results\\binary_model.pkl')
-            print('[SAVED] binary model')
-            with open('results\\binary_model_best_params.json', 'w') as outfile:
-                json.dump(best_model.best_params_, outfile)
+        # if cls_name == 'B':
+        #     best_model = ClassificationModels()('xgboost', X_train, y_train)
+        #     joblib.dump(best_model, 'results\\binary_model.pkl')
+        #     print('[SAVED] binary model')
+        #     with open('results\\binary_model_best_params.json', 'w') as outfile:
+        #         json.dump(best_model.best_params_, outfile)
+        #
+        # if cls_name == 'M':
+        #     best_model = ClassificationModels()('xgboost', X_train, y_train)
+        #     joblib.dump(best_model, 'results\\multiclass_model.pkl')
+        #     print('[SAVED] multiclass model')
+        #     with open('results\\multiclass_model_best_params.json', 'w') as outfile:
+        #         json.dump(best_model.best_params_, outfile)
 
-        if cls_name == 'M':
-            best_model = self.bayes_optimization(X_train, y_train, False)
-            joblib.dump(best_model, 'results\\multiclass_model.pkl')
-            print('[SAVED] multiclass model')
-            with open('results\\multiclass_model_best_params.json', 'w') as outfile:
-                json.dump(best_model.best_params_, outfile)
+        model = ClassificationModels()('random_forest_cv', X_train, y_train)
+        print('Accuracy: ', ClassificationMetrics()('accuracy', y_test, model.predict(X_test)))
 
         # model = joblib.load('results\\multiclass_model.pkl')
         # print('[LOADED] model')
