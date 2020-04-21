@@ -9,14 +9,36 @@ class ClassificationModels:
             "logistic_regression_cv": self._logistic_regression_cv,
             "random_forest_cv": self._random_forest_cv,
             "svc": self._svc,
-            "xgboost": self._xgboost_cv
+            "xgboost_cv": self._xgboost_cv
         }
 
-    def __call__(self, model, X_train, y_train):
+    def __call__(self, model, X_train, y_train, is_binary=True):
         if model not in self.models:
             raise Exception("Model not implemented")
         else:
-            return self.models[model](X_train, y_train)
+            if is_binary:
+                name = 'binary'
+                objective = 'binary:logistic'
+                eval_metric = 'auc'
+                scoring = 'roc_auc'
+                m_name = 'roc_auc'
+                if model == 'xgboost_cv':
+                    return self._xgboost_cv(X_train, y_train, objective, scoring, eval_metric, m_name, name)
+                elif model == 'random_forest_cv':
+                    return self._random_forest_cv(X_train, y_train, scoring, m_name, name)
+
+            elif not is_binary:
+                name = 'multiclass'
+                objective = 'multi:softmax'
+                eval_metric = 'mlogloss'
+                scoring = metrics.make_scorer(metrics.f1_score, average='weighted')
+                m_name = 'f1'
+                if model == 'xgboost_cv':
+                    return self._xgboost_cv(X_train, y_train, objective, scoring, eval_metric, m_name, name)
+                elif model == 'random_forest_cv':
+                    return self._random_forest_cv(X_train, y_train, scoring, m_name, name)
+            else:
+                return self.models[model](X_train, y_train)
 
     @staticmethod
     def _logistic_regression_cv(X_train, y_train):
@@ -29,7 +51,7 @@ class ClassificationModels:
         ).fit(X_train, y_train)
 
     @staticmethod
-    def _random_forest_cv(X_train, y_train):
+    def _random_forest_cv(X_train, y_train, scoring, m_name, name):
         def status_print(optim_result):
             all_models = pd.DataFrame(bayes_cv_tuner.cv_results_)
 
@@ -66,7 +88,7 @@ class ClassificationModels:
         ).fit(X_train, y_train, callback=status_print)
 
     @staticmethod
-    def _xgboost_cv(X_train, y_train):
+    def _xgboost_cv(X_train, y_train, objective, scoring, eval_metric, m_name, name):
         def status_print(optim_result):
             all_models = pd.DataFrame(bayes_cv_tuner.cv_results_)
 
