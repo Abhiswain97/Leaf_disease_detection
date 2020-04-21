@@ -1,6 +1,8 @@
 from joblib import Memory, Parallel, delayed
 import joblib
 import os
+import csv
+import gc
 import pickle
 import json
 import glob
@@ -11,7 +13,7 @@ import seaborn as sns
 import cv2
 import pandas as pd
 import metrics
-
+from numba import jit, cuda
 from metrics import ClassificationMetrics
 from handle_imbalance import Imbalance
 
@@ -27,6 +29,7 @@ from tqdm import tqdm
 import functools
 import time
 import warnings
+import timeit
 
 # import model_tf
 
@@ -103,32 +106,68 @@ class Classify:
         # json.dump(label_dict_binary, 'Labels\\mask_ground_truth\\binary_labels.json')
         # json.dump(label_dict_multiclass, 'Labels\\mask_ground_truth\\multiclass_labels.json')
 
-    def mask_predict(self):
-        X, y = [], []
-        for file1 in tqdm(os.listdir('Labels\\RGB_superpixels'), total=len(os.listdir('Labels\\RGB_superpixels')),
-                          desc='RGB Superpixels'):
-            for file2 in tqdm(os.listdir('Labels\\mask_ground_truth'), desc='Ground truths'):
+    def visualize_predictions(self, org_mask, predicted_mask, i):
+        fig, axs = plt.subplots(1, 2)
 
-                if file1 not in ['.gitignore', 'binary_labels(RGB).npy',
-                                 'multiclass_labels(RGB).npy'] and file2 not in ['binary_labels.json',
-                                                                                 'multiclass_labels.json',
-                                                                                 '.gitignore']:
-                    if file1[:file1.rindex('_')] == file2[:file2.rindex('_')] and file1.split('_')[-1] == 'multiclass.npy':
+        fig.suptitle('Original mask v/s Predicted mask', fontsize=50)
+        fig.set_figheight(20)
+        fig.set_figwidth(20)
 
-                        print(file1.split('_')[-1], file2.split('_')[-1])
+        axs[0].imshow(org_mask)
+        axs[0].set_axis_off()
+        axs[1].imshow(predicted_mask)
+        axs[1].set_axis_off()
 
-                        spxl = np.load(os.path.join('Labels\\RGB_superpixels', file1))
-                        R = spxl[:, :, 0].flatten()
-                        G = spxl[:, :, 1].flatten()
-                        B = spxl[:, :, 2].flatten()
-                        for r, g, b in zip(R, G, B):
-                            X.append([r, g, b])
-                        y = np.load(os.path.join(
-                            'Labels\\mask_ground_truth', file2)).flatten()
-                        # print(len(X), len(y))
+        plt.savefig(f'results\\mask_prediction-{i + 1}.png')
+        plt.show()
 
-                        print(X)
-                        exit(0)
+    def predict_mask(self):
+        superpixel_names = sorted(glob.glob('Labels\\RGB_superpixels\\*_multiclass.npy'))
+        masks = sorted(glob.glob('Labels\\mask_ground_truth\\*.npy'))
+
+        labels = np.zeros((1, 2000))
+
+        X = []
+        with open('mask_prediction_features_and_labels.csv', mode='a+') as csv_file:
+            csvwriter = csv.writer(csv_file, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+            csvwriter.writerow(['R', 'G', 'B', 'Label'])
+
+        for spxl_name, mask_name in tqdm(zip(superpixel_names, masks)):
+            image = np.load(spxl_name)
+
+            R = np.asarray(image[:, :, 0]).flatten()
+            G = np.asarray(image[:, :, 1]).flatten()
+            B = np.asarray(image[:, :, 2]).flatten()
+
+            y = np.load(mask_name).flatten()
+
+            for r, g, b, label in tqdm(zip(R, G, B, y)):
+                with open('mask_prediction_features_and_labels.csv', mode='a+') as csv_file:
+                    csvwriter = csv.writer(csv_file, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+                    csvwriter.writerow([r, g, b, label])
+
+            print(f'{spxl_name} done !')
+        # print('Starting Predictions')
+        # for i in tqdm(range(20)):
+        #     index = np.random.randint(2001, 2400)
+        #
+        #     image = np.load(superpixel_names[index])
+        #
+        #     r = image[:, :, 0]
+        #     g = image[:, :, 1]
+        #     b = image[:, :, 2]
+        #
+        #     for R, G, B in zip(r.flatten(), g.flatten(), b.flatten()):
+        #         X.append([R, G, B])
+        #
+        #     y_true = np.load(masks[index])
+        #     y_pred = model.predict(X)
+        #
+        #     y_pred = np.asarray(y_pred)
+        #
+        #     self.visualize_predictions(y_true, y_pred.reshape((image.shape[0], image.shape[1])), i)
+        #
+        #     X.clear()
 
     def bayes_optimization(self, X_train, y_train, is_binary=True):
         if is_binary:
@@ -195,21 +234,34 @@ class Classify:
         X = df.iloc[:, 1:5].values
         y = df['label'].values
 
+        print(f'Using repeated_edited_nearest_neighbours')
+
         X_resampled, y_resampled = Imbalance()(
             'repeated_edited_nearest_neighbours', X, y)
 
         X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25,
                                                             random_state=42)
 
-        print(f'Using repeated_edited_nearest_neighbours')
-
         if cls_name == 'B':
             best_model = self.bayes_optimization(X_train, y_train)
-        else:
-            best_model = self.bayes_optimization(X_train, y_train, False)
+            joblib.dump(best_model, 'results\\binary_model.pkl')
+            print('[SAVED] binary model')
+            with open('results\\binary_model_best_params.json', 'w') as outfile:
+                json.dump(best_model.best_params_, outfile)
 
-        print('Accuracy: ', ClassificationMetrics()('accuracy', y_test, best_model.best_estimator_.predict(X_test)))
-        self.plot_cm(y_test, best_model.predict(X_test))
+        if cls_name == 'M':
+            best_model = self.bayes_optimization(X_train, y_train, False)
+            joblib.dump(best_model, 'results\\multiclass_model.pkl')
+            print('[SAVED] multiclass model')
+            with open('results\\multiclass_model_best_params.json', 'w') as outfile:
+                json.dump(best_model.best_params_, outfile)
+
+        # model = joblib.load('results\\multiclass_model.pkl')
+        # print('[LOADED] model')
+        #
+        # print('Accuracy: ', ClassificationMetrics()('accuracy', y_test, model.predict(X_test)))
+        # print('Precision: ', ClassificationMetrics()('precision', y_test, model.predict(X_test)))
+        # self.plot_cm(y_test, best_model.predict(X_test))
 
     def NeuralNet(self):
 
@@ -217,59 +269,6 @@ class Classify:
         model = tfnet.model()
         history = tfnet.train(model)
         # tfnet.plot(history)
-
-    def mask_predict(self):
-        X, y = [], []
-        for file1 in tqdm(os.listdir('Labels\\RGB_superpixels')):
-            for file2 in tqdm(os.listdir('Labels\\mask_ground_truth')):
-
-                if file1 not in ['.gitignore', 'binary_labels(RGB).npy',
-                                 'multiclass_labels(RGB).npy'] and file2 not in ['binary_labels.json',
-                                                                                 'multiclass_labels.json',
-                                                                                 '.gitignore']:
-                    if file1[:file1.rindex('_')] == file2[:file2.rindex('_')] \
-                            and file1.split('_')[-1] == 'multiclass.npy':
-                        print(file1, file2)
-
-                        # print(file1[:file1.rindex('_')], file2[:file2.rindex('_')])
-                        # print(file1.split('_')[-1], file2.split('_')[-1])
-
-                        spxl = np.load(os.path.join('Labels\\RGB_superpixels', file1))
-                        label = np.load(os.path.join('Labels\\mask_ground_truth', file2))
-                        print(spxl.shape, label.shape)
-
-                        R = spxl[:, :, 0].flatten()
-                        # print(len(R))
-
-                        G = spxl[:, :, 1].flatten()
-                        B = spxl[:, :, 2].flatten()
-                        for r, g, b in zip(R, G, B):
-                            X.append(r)
-                        y = np.load(os.path.join(
-                            'Labels\\mask_ground_truth', file2)).flatten()
-                        # print(len(X), len(y))
-
-                        # X_resampled, y_resampled = Imbalance()(
-                        #     'repeated_edited_nearest_neighbours', X, y)
-
-                        print('Before sampling: ', len(X), len(y))
-                        X_resampled, y_resampled = Imbalance()(
-                            'random_under_sampler', R.reshape(-1, 1), y)
-
-                        print('Resampling done !')
-
-                        X_train, X_test, y_train, y_test = train_test_split(
-                            R.reshape(-1, 1), y, test_size=0.25, random_state=42)
-
-                        # X_train, X_test, y_train, y_test = train_test_split(
-                        #     X_resampled, y_resampled, test_size=0.25, random_state=42)
-                        print('Splitting done ')
-
-                        # best_model = self.bayes_optimization(X_train, y_train)
-                        model = linear_model.LogisticRegression().fit(X_train, y_train)
-                        # model = linear_model.LogisticRegression().fit(X_train, y_train)
-                        print('Accuracy: ',
-                              ClassificationMetrics()('accuracy', y_test, model.predict(X_test)))
 
     @functools.lru_cache(maxsize=128)
     def glcm(self):
@@ -310,12 +309,13 @@ if __name__ == '__main__':
     multiclass_file = 'features(multiclass_classify)(RGB).csv'
     cl = Classify()
     # cl.glcm()
-    # cls_name = input('Enter the type of classification from [B] or [M]: ')
-    # if cls_name == 'B':
-    #     cl.classifier(binary_file, cls_name)
-    # else:
-    #     cl.classifier(multiclass_file, cls_name)
+    cls_name = input('Enter the type of classification from [B] or [M]: ')
+    if cls_name == 'B':
+        cl.classifier(binary_file, cls_name)
+    else:
+        cl.classifier(multiclass_file, cls_name)
+    # cl.predict_mask()
     # cl.make_label()
-    cl.mask_predict()
+
     # cl.make_json()
     # cl.NeuralNet()

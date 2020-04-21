@@ -1,1 +1,0 @@
-cl.mask_predict()

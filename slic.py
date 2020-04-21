@@ -12,7 +12,6 @@ import logging
 import functools
 import h5py
 import matplotlib.pyplot as plt
-import hickle as hkl
 
 logger = logging.getLogger('myapp-10')
 hdlr = logging.FileHandler('logs/myapp-10.log', mode='w')
@@ -186,7 +185,7 @@ class Superpixels:
 
         logger.info(f'[COMPLETED] in {(time.time() - start) / 60} minutes')
 
-    def make_csv(self, path, mode='mask'):
+    def make_csv(self, path, org_folders, mask_folders, mode='org'):
         labels = {}
         paths1, paths2 = [], []
         label1, label2 = [], []
@@ -220,13 +219,14 @@ class Superpixels:
 if __name__ == '__main__':
     org_folders = ['Bacterial leaf blight', 'Brown spot', 'Leaf smut']
     mask_folders = ['Bacterial Leaf blight masks', 'Brown spot masks', 'leaf smut masks']
-    path = r'C:\Users\Abhishek Swain\PycharmProjects\leaf-disease\Leaf disease'
+    path = 'Leaf_disease'
     sp = Superpixels(path)
-    # sp.make_csv(path, mode='org')
+    sp.make_csv(path, org_folders, mask_folders, mode='org')
     # sp.make_image_superpixel()
     # sp.slic_sp()
     # sp.binary_class()
     # sp.binary_label()
-    sp.set_images_and_masks()
+    # sp.set_images_and_masks()
+
 
 
