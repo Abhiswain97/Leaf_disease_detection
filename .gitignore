@@ -1,5 +1,4 @@
 .idea/
-.vscode/
 .ipynb_checkpoints
 image_superpixel_pkls/
 Labels/
@@ -11,7 +10,10 @@ cachedir/
 wandb/
 feature_files/
 notebooks/
+.vscode/
 *.log
+*.mmd
+
 
 
 # Byte-compiled / optimized / DLL files
