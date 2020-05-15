@@ -9,9 +9,8 @@ catboost_info/
 __pycache__/
 cachedir/
 wandb/
-*.csv
-*.npy
-*.ipynb
+feature_files/
+notebooks/
 *.log
 
 
