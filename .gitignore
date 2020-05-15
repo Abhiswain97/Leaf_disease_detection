@@ -1,5 +1,5 @@
 .idea/
-.ipynb_checkpoints
+.ipynb_checkpoints/
 image_superpixel_pkls/
 Labels/
 Leaf_disease/
@@ -10,9 +10,10 @@ cachedir/
 wandb/
 feature_files/
 notebooks/
+keras_models/
 .vscode/
 *.log
-*.mmd
+LeafDD.mmd
 
 
 
