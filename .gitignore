@@ -9,7 +9,6 @@ __pycache__/
 cachedir/
 wandb/
 feature_files/
-notebooks/
 keras_models/
 .vscode/
 LeafDD.mmd
