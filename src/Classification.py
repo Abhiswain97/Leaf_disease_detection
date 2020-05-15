@@ -79,19 +79,19 @@ class Classify:
 
         label_dict_binary = {}
         label_dict_multiclass = {}
-        for file, label in tqdm(zip(os.listdir(self.path), np.load('Labels\\RGB_superpixels\\binary_labels(RGB).npy'))):
+        for file, label in tqdm(zip(os.listdir(self.path), self.binary_labels)):
             if file.endswith('binary.npy'):
                 label_dict_binary[file] = label
 
         for file, label in tqdm(
-                zip(os.listdir(self.path), np.load('Labels\\RGB_superpixels\\multiclass_labels(RGB).npy'))):
+                zip(os.listdir(self.path), self.multiclass_labels)):
             if file.endswith('multiclass.npy'):
                 label_dict_multiclass[file] = label
 
-        with open('Labels\\mask_ground_truth\\binary_labels.json', 'w') as fp:
-            json.dump(label_dict_binary, fp, default=convert)
+        with open(self.base_dir + 'Labels\\mask_ground_truth\\binary_labels.json', 'w') as fp:
+            json.dump(self.base_dir + label_dict_binary, fp, default=convert)
 
-        with open('Labels\\mask_ground_truth\\multiclass_labels.json', 'w') as fp:
+        with open(self.base_dir + 'Labels\\mask_ground_truth\\multiclass_labels.json', 'w') as fp:
             json.dump(label_dict_multiclass, fp, default=convert)
 
         # json.dump(label_dict_binary, 'Labels\\mask_ground_truth\\binary_labels.json')
@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
     is_binary = input('Is it binary classification? [True or False]: ')
 
-    if is_binary == True:
+    if is_binary:
         print('Binary classification!')
         print(f'Passing file: {binary_file} and is_binary={is_binary}')
         obj.classify(binary_file, is_binary)
