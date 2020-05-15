@@ -134,10 +134,10 @@ class Classify:
                 'f1': ClassificationMetrics()('f1', y_test, model.predict(X_test)),
             }
 
-            with open(f'results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json', 'w') as file:
+            with open(self.base_dir + f'results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json', 'w') as file:
                 json.dump(results, file)
 
-            print(f'[SAVED] results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json')
+            print('[SAVED]' + self.base_dir + f'results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json')
 
         else:
             results = {
@@ -145,10 +145,10 @@ class Classify:
                 'f1': ClassificationMetrics()('f1', y_test, model.predict(X_test)),
             }
 
-            with open(f'results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json', 'w') as file:
+            with open(self.base_dir + f'results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json', 'w') as file:
                 json.dump(results, file)
 
-            print(f'[SAVED] results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json')
+            print('[SAVED]' + self.base_dir + f'results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json')
 
     def predict_mask(self):
         superpixel_names = sorted(glob.glob(self.base_dir + 'Labels\\RGB_superpixels\\*_multiclass.npy'))
