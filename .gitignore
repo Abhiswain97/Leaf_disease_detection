@@ -12,13 +12,11 @@ feature_files/
 notebooks/
 keras_models/
 .vscode/
-*.log
 LeafDD.mmd
 
 
 
 # Byte-compiled / optimized / DLL files
-__pycache__/
 *.py[cod]
 *$py.class
 
