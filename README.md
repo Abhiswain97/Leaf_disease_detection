@@ -6,4 +6,9 @@ Instead I design a multi-stage(3 stage classifier) classifier.
 
 ### Binary-classification --> Multiclass-classification --> Mask-prediction
 
+So What can you do to use it?
+Currently, I have created the feature files(made using glcm features), U can run the classification(Binary and multiclass) and reproduce my results. Do:
+`python Classification.py --model <model-name>`
+
+
 It's a work in progress.... So there's still polishing going on I will keep it coming!
