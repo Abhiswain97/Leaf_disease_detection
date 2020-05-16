@@ -25,6 +25,7 @@ from skimage.feature import greycomatrix, greycoprops
 from tqdm import tqdm
 import time
 import warnings
+import argparse
 
 warnings.filterwarnings('ignore')
 
@@ -112,7 +113,7 @@ class Classify:
         # plt.savefig(f'results\\mask_prediction-{i + 1}.png')
         plt.show()
 
-    def classify(self, file, is_binary):
+    def classify(self, file, is_binary, model_name):
 
         df = pd.read_csv(file)
         X = df[['contrast', 'dissimilarity', 'homogeneity', 'ASM', 'energy']]
@@ -122,7 +123,7 @@ class Classify:
 
         X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, random_state=42, test_size=0.25)
 
-        model = ClassificationModels()('svc', X_train, y_train, is_binary)
+        model = ClassificationModels()(model_name, X_train, y_train, is_binary)
 
         print(ClassificationMetrics()('accuracy', y_test, model.predict(X_test)))
 
@@ -150,7 +151,7 @@ class Classify:
 
             print('[SAVED]' + self.base_dir + f'results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json')
 
-    def predict_mask(self):
+    def predict_mask(self, model_name):
         superpixel_names = sorted(glob.glob(self.base_dir + 'Labels\\RGB_superpixels\\*_multiclass.npy'))
         masks = sorted(glob.glob(self.base_dir + 'Labels\\mask_ground_truth\\*.npy'))
 
@@ -173,7 +174,7 @@ class Classify:
             print(f'{spxl_name} done !')
 
             model = ClassificationModels()(
-                'random_forest', X, y, is_binary=True
+                model_name, X, y, is_binary=True
             )
 
             X.clear()
@@ -236,20 +237,31 @@ class Classify:
 
 
 if __name__ == '__main__':
+    
+    parser = argparse.ArgumentParser(description='Classification parameters')
+    parser.add_argument('--binary', type=bool, default=True, help='type of classification', required=True)
+    parser.add_argument('--model',
+                        type=str,
+                        default='svc',
+                        choices=['svc', 'xgboost_cv', 'random_forest', 'logistic_regression_cv'],
+                        help='Name of the model',
+                        required=True)
+    parser.add_argument('--mask', type=bool, default=False, help='Predict mask or not ?')
+    args = parser.parse_args()
+
     FEATURE_DIR = 'feature_files\\'
     binary_file = FEATURE_DIR + 'features(binary_classify)(RGB).csv'
     multiclass_file = FEATURE_DIR + 'features(multiclass_classify)(RGB).csv'
     obj = Classify()
 
-    obj.predict_mask()
+    if args.mask:
+        obj.predict_mask(args.model)
 
-    is_binary = input('Is it binary classification? [True or False]: ')
-
-    if is_binary:
+    if args.binary:
         print('Binary classification!')
-        print(f'Passing file: {binary_file} and is_binary={is_binary}')
-        obj.classify(binary_file, is_binary)
+        print(f'Passing file: {binary_file} and is_binary={args.binary}')
+        obj.classify(binary_file, is_binary=args.binary, model_name=args.model)
     else:
         print('Multiclass classification!')
-        print(f'Passing file: {multiclass_file} and is_binary={is_binary}')
-        obj.classify(multiclass_file, is_binary)
+        print(f'Passing file: {multiclass_file} and is_binary={args.binary}')
+        obj.classify(multiclass_file, is_binary=args.binary, model_name=args.model)

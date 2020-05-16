@@ -4,6 +4,7 @@ import xgboost as xgb
 import pandas as pd
 import numpy as np
 
+
 class ClassificationModels:
     def __init__(self):
         self.models = {
@@ -47,7 +48,7 @@ class ClassificationModels:
                 n_splits=3,
                 shuffle=True,
                 random_state=42
-            ),verbose=1
+            ), verbose=1
         ).fit(X_train, y_train)
 
     @staticmethod
