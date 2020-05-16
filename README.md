@@ -11,9 +11,10 @@ Currently, I have created the feature files(made using glcm features), U can run
 
 <br>
 ```
-git clone https://github.com/Abhiswain97/Leaf_disease_detection.git
-cd src 
-python Classification.py --model <model-name> --binary <option>
+console
+C:\Desktop> git clone https://github.com/Abhiswain97/Leaf_disease_detection.git
+C:\Desktop\Leaf_disease_detection> cd src 
+C:\Desktop\Leaf_disease_detection\src> python Classification.py --model <model-name> --binary <option>
 ```
 
 <br>
