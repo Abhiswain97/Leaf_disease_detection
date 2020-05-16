@@ -10,11 +10,12 @@ So What can you do to use it? <br>
 Currently, I have created the feature files(made using glcm features), U can run the classification(Binary and multiclass) and reproduce my results. Do:
 
 <br>
-"""
+```
 git clone https://github.com/Abhiswain97/Leaf_disease_detection.git
 cd src 
 python Classification.py --model <model-name> --binary <option>
-"""
+```
+
 <br>
 setting binary to `True` does Binary Classification and setting it to `False` does Multi-class Classification.
 
