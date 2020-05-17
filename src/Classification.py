@@ -31,6 +31,29 @@ warnings.filterwarnings('ignore')
 
 
 class Classify:
+    """
+    Leaf disease detection using image segmentation
+    ---------------------------------------------------------------------------------------------------------
+    This is project on detecting leaf diseases using image segmentation. 
+    The catch is I do it without using deep learning. 
+    Instead I design a multi-stage(3 stage classifier) classifier. (Refer to project_map.png for details)
+
+    Binary-classification --> Multiclass-classification --> Mask-prediction
+    So What can you do to use it?
+    Currently, I have created the feature files(made using glcm features), 
+    U can run the classification(Binary and multiclass) and reproduce my results. Do:
+
+    git clone https://github.com/Abhiswain97/Leaf_disease_detection.git
+    cd src
+    python Classification.py --model <model-name> --binary <option>
+    For help: python Classification.py -h
+
+    Setting binary to True does Binary Classification and setting it to False does Multi-class Classification.
+
+    It's a work in progress.... So there's still polishing going on I will keep it coming!
+    ----------------------------------------------------------------------------------------------------------
+    """
+
     def __init__(self):
         self.base_dir = 'E:\\Btech project\\leaf-disease\\'
         self.data = {}
@@ -113,7 +136,7 @@ class Classify:
         # plt.savefig(f'results\\mask_prediction-{i + 1}.png')
         plt.show()
 
-    def classify(self, file, is_binary, model_name):
+    def classify(self, file, mode, model_name):
 
         df = pd.read_csv(file)
         X = df[['contrast', 'dissimilarity', 'homogeneity', 'ASM', 'energy']]
@@ -123,28 +146,32 @@ class Classify:
 
         X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, random_state=42, test_size=0.25)
 
-        model = ClassificationModels()(model_name, X_train, y_train, is_binary)
+        model = ClassificationModels()(model_name, X_train, y_train, mode)
 
         print(ClassificationMetrics()('accuracy', y_test, model.predict(X_test)))
 
-        if is_binary == 'True':
+        if mode == 'B':
             results = {
                 'model': model.__class__.__name__,
                 'precision': ClassificationMetrics()('precision', y_test, model.predict(X_test)),
                 'recall': ClassificationMetrics()('recall', y_test, model.predict(X_test)),
                 'f1': ClassificationMetrics()('f1', y_test, model.predict(X_test)),
             }
+            
+            print(results)
 
             with open(self.base_dir + f'results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json', 'w') as file:
                 json.dump(results, file)
 
             print('[SAVED]' + self.base_dir + f'results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json')
 
-        else:
+        if mode == 'M':
             results = {
                 'model': model.__class__.__name__,
                 'f1': ClassificationMetrics()('f1', y_test, model.predict(X_test)),
             }
+
+            print(results)
 
             with open(self.base_dir + f'results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json', 'w') as file:
                 json.dump(results, file)
@@ -239,7 +266,7 @@ class Classify:
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Classification parameters')
-    parser.add_argument('--binary', type=bool, default=True, help='type of classification', required=True)
+    parser.add_argument('--mode', type=str, help='type of classification', choices=['B', 'M'], default='B')
     parser.add_argument('--model',
                         type=str,
                         default='svc',
@@ -248,20 +275,23 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument('--mask', type=bool, default=False, help='Predict mask or not ?')
     args = parser.parse_args()
-
+    BASE_DIR = 'E:\\Btech project\\leaf-disease\\'
     FEATURE_DIR = 'feature_files\\'
-    binary_file = FEATURE_DIR + 'features(binary_classify)(RGB).csv'
-    multiclass_file = FEATURE_DIR + 'features(multiclass_classify)(RGB).csv'
+    binary_file = BASE_DIR + FEATURE_DIR + 'features(binary_classify)(RGB).csv'
+    multiclass_file = BASE_DIR + FEATURE_DIR + 'features(multiclass_classify)(RGB).csv'
     obj = Classify()
+
+    print(Classify.__doc__)
 
     if args.mask:
         obj.predict_mask(args.model)
 
-    if args.binary:
-        print('Binary classification!')
-        print(f'Passing file: {binary_file} and is_binary={args.binary}')
-        obj.classify(binary_file, is_binary=args.binary, model_name=args.model)
     else:
-        print('Multiclass classification!')
-        print(f'Passing file: {multiclass_file} and is_binary={args.binary}')
-        obj.classify(multiclass_file, is_binary=args.binary, model_name=args.model)
+        if args.mode == 'B':
+            print('Binary classification!')
+            print(f'Passing file: {binary_file} and mode={args.mode}')
+            obj.classify(binary_file, mode=args.mode, model_name=args.model)
+        if args.mode == 'M':
+            print('Multiclass classification!')
+            print(f'Passing file: {multiclass_file} and mode={args.mode}')
+            obj.classify(multiclass_file, mode=args.mode, model_name=args.model)
