@@ -8,7 +8,6 @@ catboost_info/
 __pycache__/
 cachedir/
 wandb/
-feature_files/
 keras_models/
 .vscode/
 LeafDD.mmd
