@@ -13,6 +13,7 @@ Currently, I have created the feature files(made using glcm features), U can run
 cd src `<br>`
 python Classification.py --model <model-name> --binary <option>`
 <br>
+For help: `python Classification.py -h`
 
 Setting binary to `True` does Binary Classification and setting it to `False` does Multi-class Classification.
 
