@@ -14,11 +14,9 @@ git clone https://github.com/Abhiswain97/Leaf_disease_detection.git
 cd src
 python Classification.py --model <model-name> --binary <option>
 ```
-<br>
-For help: 
-```
-python Classification.py -h
-```
+
+For help: `python Classification.py -h`
+
 
 Setting binary to `True` does Binary Classification and setting it to `False` does Multi-class Classification.
 
