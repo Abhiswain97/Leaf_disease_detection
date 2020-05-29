@@ -4,11 +4,11 @@ import numpy as np
 from sklearn.metrics import roc_auc_score, roc_curve, precision_score, recall_score
 from sklearn.multiclass import OneVsRestClassifier
 
-model = load_model('keras_models/model(multiclass).h5')
+model = load_model("keras_models/model(multiclass).h5")
 
 print(model.summary())
-X_test = np.load('X_test.npy')
-y_test = np.load('y_test.npy')
+X_test = np.load("X_test.npy")
+y_test = np.load("y_test.npy")
 
 score = model.evaluate(X_test, y_test)
 

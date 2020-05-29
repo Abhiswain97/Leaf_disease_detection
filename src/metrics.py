@@ -9,7 +9,7 @@ class ClassificationMetrics:
             "precision": self._precision,
             "recall": self._recall,
             "auc": self._auc,
-            "logloss": self._logloss
+            "logloss": self._logloss,
         }
 
     def __call__(self, metric, y_true, y_pred, y_proba=None):
@@ -38,7 +38,7 @@ class ClassificationMetrics:
 
     @staticmethod
     def _f1(y_true, y_pred):
-        return skmetrics.f1_score(y_true=y_true, y_pred=y_pred, average='weighted')
+        return skmetrics.f1_score(y_true=y_true, y_pred=y_pred, average="weighted")
 
     @staticmethod
     def _recall(y_true, y_pred):
