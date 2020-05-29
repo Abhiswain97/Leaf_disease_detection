@@ -27,7 +27,7 @@ import time
 import warnings
 import argparse
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 
 class Classify:
@@ -55,7 +55,7 @@ class Classify:
     """
 
     def __init__(self):
-        self.base_dir = 'E:\\Btech project\\leaf-disease\\'
+        self.base_dir = "E:\\Btech project\\leaf-disease\\"
         self.data = {}
         self.name = []
         self.energy = []
@@ -63,12 +63,14 @@ class Classify:
         self.homogeneity = []
         self.dissimilarity = []
         self.contrast = []
-        self.path = self.base_dir + 'Labels\\RGB_superpixels'
-        self.mask_label_path = self.base_dir + 'Labels\\mask_ground_truth'
+        self.path = self.base_dir + "Labels\\RGB_superpixels"
+        self.mask_label_path = self.base_dir + "Labels\\mask_ground_truth"
         self.binary_labels = np.load(
-            self.base_dir + 'Labels\\RGB_superpixels\\binary_labels(RGB).npy')
+            self.base_dir + "Labels\\RGB_superpixels\\binary_labels(RGB).npy"
+        )
         self.multiclass_labels = np.load(
-            self.base_dir + 'Labels\\RGB_superpixels\\multiclass_labels(RGB).npy')
+            self.base_dir + "Labels\\RGB_superpixels\\multiclass_labels(RGB).npy"
+        )
 
     def plot_cm(self, y_true, y_pred, figsize=(10, 10)):
         cm = metrics.confusion_matrix(y_true, y_pred, labels=np.unique(y_true))
@@ -82,17 +84,16 @@ class Classify:
                 p = cm_perc[i, j]
                 if i == j:
                     s = cm_sum[i]
-                    annot[i, j] = '%.1f%%\n%d/%d' % (p, c, s)
+                    annot[i, j] = "%.1f%%\n%d/%d" % (p, c, s)
                 elif c == 0:
-                    annot[i, j] = ''
+                    annot[i, j] = ""
                 else:
-                    annot[i, j] = '%.1f%%\n%d' % (p, c)
-        cm = pd.DataFrame(cm, index=np.unique(y_true),
-                          columns=np.unique(y_true))
-        cm.index.name = 'Actual'
-        cm.columns.name = 'Predicted'
+                    annot[i, j] = "%.1f%%\n%d" % (p, c)
+        cm = pd.DataFrame(cm, index=np.unique(y_true), columns=np.unique(y_true))
+        cm.index.name = "Actual"
+        cm.columns.name = "Predicted"
         fig, ax = plt.subplots(figsize=figsize)
-        sns.heatmap(cm, cmap="YlGnBu", annot=annot, fmt='', ax=ax)
+        sns.heatmap(cm, cmap="YlGnBu", annot=annot, fmt="", ax=ax)
         plt.show()
 
     def make_json(self):
@@ -104,18 +105,21 @@ class Classify:
         label_dict_binary = {}
         label_dict_multiclass = {}
         for file, label in tqdm(zip(os.listdir(self.path), self.binary_labels)):
-            if file.endswith('binary.npy'):
+            if file.endswith("binary.npy"):
                 label_dict_binary[file] = label
 
-        for file, label in tqdm(
-                zip(os.listdir(self.path), self.multiclass_labels)):
-            if file.endswith('multiclass.npy'):
+        for file, label in tqdm(zip(os.listdir(self.path), self.multiclass_labels)):
+            if file.endswith("multiclass.npy"):
                 label_dict_multiclass[file] = label
 
-        with open(self.base_dir + 'Labels\\mask_ground_truth\\binary_labels.json', 'w') as fp:
+        with open(
+            self.base_dir + "Labels\\mask_ground_truth\\binary_labels.json", "w"
+        ) as fp:
             json.dump(self.base_dir + label_dict_binary, fp, default=convert)
 
-        with open(self.base_dir + 'Labels\\mask_ground_truth\\multiclass_labels.json', 'w') as fp:
+        with open(
+            self.base_dir + "Labels\\mask_ground_truth\\multiclass_labels.json", "w"
+        ) as fp:
             json.dump(label_dict_multiclass, fp, default=convert)
 
         # json.dump(label_dict_binary, 'Labels\\mask_ground_truth\\binary_labels.json')
@@ -124,7 +128,7 @@ class Classify:
     def visualize_predictions(self, org_mask, predicted_mask, i):
         fig, axs = plt.subplots(1, 2)
 
-        fig.suptitle('Original mask v/s Predicted mask', fontsize=50)
+        fig.suptitle("Original mask v/s Predicted mask", fontsize=50)
         fig.set_figheight(20)
         fig.set_figwidth(20)
 
@@ -136,51 +140,113 @@ class Classify:
         # plt.savefig(f'results\\mask_prediction-{i + 1}.png')
         plt.show()
 
+    def predict(self, model):
+        image = cv2.imread("test.jpg")
+
+        if len(image.shape) == 3:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+            glcm = greycomatrix(
+                image, distances=[1], angles=[0], normed=True, symmetric=True
+            )
+
+            contrast = greycoprops(glcm, "contrast")[0][0]
+            dissimilarity = greycoprops(glcm, "dissimilarity")[0][0]
+            homogeneity = greycoprops(glcm, "homogeneity")[0][0]
+            ASM = greycoprops(glcm, "ASM")[0][0]
+            energy = greycoprops(glcm, "energy")[0][0]
+
+            features = [contrast, dissimilarity, homogeneity, ASM, energy]
+            features = features / sum(features)
+
+            print(features)
+
+            res = model.predict(np.array(features).reshape(1, -1))
+            print(res)
+            if res == 0:
+                print("Bacterial Leaf Blight")
+            if res == 1:
+                print("Brown spot")
+            if res == 2:
+                print("Leaf smut")
+
     def classify(self, file, mode, model_name):
 
         df = pd.read_csv(file)
-        X = df[['contrast', 'dissimilarity', 'homogeneity', 'ASM', 'energy']]
-        y = df['label']
+        X = df[["contrast", "dissimilarity", "homogeneity", "ASM", "energy"]]
+        y = df["label"]
 
-        X_resampled, y_resampled = Imbalance()('repeated_edited_nearest_neighbours', X, y)
+        X_resampled, y_resampled = Imbalance()(
+            "repeated_edited_nearest_neighbours", X, y
+        )
 
-        X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, random_state=42, test_size=0.25)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_resampled, y_resampled, random_state=42, test_size=0.25
+        )
 
-        model = ClassificationModels()(model_name, X_train, y_train, mode)
+        if mode == "B":
 
-        print(ClassificationMetrics()('accuracy', y_test, model.predict(X_test)))
+            model = ClassificationModels()(model_name, X_train, y_train, is_binary=True)
 
-        if mode == 'B':
             results = {
-                'model': model.__class__.__name__,
-                'precision': ClassificationMetrics()('precision', y_test, model.predict(X_test)),
-                'recall': ClassificationMetrics()('recall', y_test, model.predict(X_test)),
-                'f1': ClassificationMetrics()('f1', y_test, model.predict(X_test)),
-            }
-            
-            print(results)
-
-            with open(self.base_dir + f'results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json', 'w') as file:
-                json.dump(results, file)
-
-            print('[SAVED]' + self.base_dir + f'results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json')
-
-        if mode == 'M':
-            results = {
-                'model': model.__class__.__name__,
-                'f1': ClassificationMetrics()('f1', y_test, model.predict(X_test)),
+                "model": model.__class__.__name__,
+                "precision": ClassificationMetrics()(
+                    "precision", y_test, model.predict(X_test)
+                ),
+                "recall": ClassificationMetrics()(
+                    "recall", y_test, model.predict(X_test)
+                ),
+                "f1": ClassificationMetrics()("f1", y_test, model.predict(X_test)),
             }
 
-            print(results)
-
-            with open(self.base_dir + f'results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json', 'w') as file:
+            with open(
+                self.base_dir
+                + f"results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json",
+                "w",
+            ) as file:
                 json.dump(results, file)
 
-            print('[SAVED]' + self.base_dir + f'results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json')
+            print(
+                "[SAVED]"
+                + self.base_dir
+                + f"results\\features(binary_classify)(RGB)-{model.__class__.__name__}.json"
+            )
+
+        if mode == "M":
+
+            model = ClassificationModels()(
+                model_name, X_train, y_train, is_binary=False
+            )
+            print(model)
+
+            # Testing !
+            self.predict(model)
+
+            results = {
+                "model": model.__class__.__name__,
+                "f1": ClassificationMetrics()("f1", y_test, model.predict(X_test)),
+            }
+
+            print(results)
+
+            with open(
+                self.base_dir
+                + f"results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json",
+                "w",
+            ) as file:
+                json.dump(results, file)
+
+            print(
+                "[SAVED]"
+                + self.base_dir
+                + f"results\\features(multiclass_classify)(RGB)-{model.__class__.__name__}.json"
+            )
 
     def predict_mask(self, model_name):
-        superpixel_names = sorted(glob.glob(self.base_dir + 'Labels\\RGB_superpixels\\*_multiclass.npy'))
-        masks = sorted(glob.glob(self.base_dir + 'Labels\\mask_ground_truth\\*.npy'))
+        superpixel_names = sorted(
+            glob.glob(self.base_dir + "Labels\\RGB_superpixels\\*_multiclass.npy")
+        )
+        masks = sorted(glob.glob(self.base_dir + "Labels\\mask_ground_truth\\*.npy"))
 
         X = []
         for spxl_name, mask_name in tqdm(zip(superpixel_names, masks)):
@@ -198,15 +264,13 @@ class Classify:
 
             print(np.array(X).shape, y.shape)
 
-            print(f'{spxl_name} done !')
+            print(f"{spxl_name} done !")
 
-            model = ClassificationModels()(
-                model_name, X, y, is_binary=True
-            )
+            model = ClassificationModels()(model_name, X, y, is_binary=True)
 
             X.clear()
 
-            print('Testing !')
+            print("Testing !")
             idx = np.random.randint(2001, 2400)
             image = np.load(superpixel_names[idx])
 
@@ -232,66 +296,75 @@ class Classify:
 
     def glcm(self):
         for file in tqdm(os.listdir(self.path), total=len(os.listdir(self.path))):
-            if file.endswith('binary.npy'):
+            if file.endswith("binary.npy"):
                 image = np.load(os.path.join(self.path, file))
 
                 if len(image.shape) == 3:
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-                glcm = greycomatrix(image, distances=[1], angles=[
-                    0], normed=True, symmetric=True)
+                glcm = greycomatrix(
+                    image, distances=[1], angles=[0], normed=True, symmetric=True
+                )
 
                 # Feature Extraction using GLCM
                 self.name.append(file)
-                self.contrast.append(greycoprops(glcm, 'contrast')[0][0])
-                self.dissimilarity.append(
-                    greycoprops(glcm, 'dissimilarity')[0][0])
-                self.homogeneity.append(greycoprops(glcm, 'homogeneity')[0][0])
-                self.ASM.append(greycoprops(glcm, 'ASM')[0][0])
-                self.energy.append(greycoprops(glcm, 'energy')[0][0])
+                self.contrast.append(greycoprops(glcm, "contrast")[0][0])
+                self.dissimilarity.append(greycoprops(glcm, "dissimilarity")[0][0])
+                self.homogeneity.append(greycoprops(glcm, "homogeneity")[0][0])
+                self.ASM.append(greycoprops(glcm, "ASM")[0][0])
+                self.energy.append(greycoprops(glcm, "energy")[0][0])
 
-        self.data = {'name': self.name,
-                     'contrast': self.contrast / np.mean(self.contrast),
-                     'dissimilarity': self.dissimilarity,
-                     'homogeneity': self.homogeneity,
-                     'ASM': self.ASM,
-                     'energy': self.energy,
-                     'label': self.binary_labels
-                     }
+        self.data = {
+            "name": self.name,
+            "contrast": self.contrast / np.mean(self.contrast),
+            "dissimilarity": self.dissimilarity,
+            "homogeneity": self.homogeneity,
+            "ASM": self.ASM,
+            "energy": self.energy,
+            "label": self.binary_labels,
+        }
 
         features = pd.DataFrame(self.data)
-        features.to_csv('features(binary_classify)(RGB).csv', index=False)
+        features.to_csv("features(binary_classify)(RGB).csv", index=False)
 
 
-if __name__ == '__main__':
-    
-    parser = argparse.ArgumentParser(description='Classification parameters')
-    parser.add_argument('--mode', type=str, help='type of classification', choices=['B', 'M'], default='B')
-    parser.add_argument('--model',
-                        type=str,
-                        default='svc',
-                        choices=['svc', 'xgboost_cv', 'random_forest', 'logistic_regression_cv'],
-                        help='Name of the model',
-                        required=True)
-    parser.add_argument('--mask', type=bool, default=False, help='Predict mask or not ?')
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description="Classification parameters")
+    parser.add_argument(
+        "--mode",
+        type=str,
+        help="type of classification",
+        choices=["B", "M"],
+        default="B",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="svc",
+        choices=["svc", "xgboost_cv", "random_forest", "logistic_regression_cv"],
+        help="Name of the model",
+        required=True,
+    )
+    parser.add_argument(
+        "--mask", type=bool, default=False, help="Predict mask or not ?"
+    )
     args = parser.parse_args()
-    BASE_DIR = 'E:\\Btech project\\leaf-disease\\'
-    FEATURE_DIR = 'feature_files\\'
-    binary_file = BASE_DIR + FEATURE_DIR + 'features(binary_classify)(RGB).csv'
-    multiclass_file = BASE_DIR + FEATURE_DIR + 'features(multiclass_classify)(RGB).csv'
+    BASE_DIR = "E:\\Btech project\\leaf-disease\\"
+    FEATURE_DIR = "feature_files\\"
+    binary_file = BASE_DIR + FEATURE_DIR + "features(binary_classify)(RGB).csv"
+    multiclass_file = BASE_DIR + FEATURE_DIR + "features(multiclass_classify)(RGB).csv"
     obj = Classify()
-
-    print(Classify.__doc__)
 
     if args.mask:
         obj.predict_mask(args.model)
 
     else:
-        if args.mode == 'B':
-            print('Binary classification!')
-            print(f'Passing file: {binary_file} and mode={args.mode}')
+        if args.mode == "B":
+            print("Binary classification!")
+            print(f"Passing file: {binary_file} and mode={args.mode}")
             obj.classify(binary_file, mode=args.mode, model_name=args.model)
-        if args.mode == 'M':
-            print('Multiclass classification!')
-            print(f'Passing file: {multiclass_file} and mode={args.mode}')
+        if args.mode == "M":
+            print("Multiclass classification!")
+            print(f"Passing file: {multiclass_file} and mode={args.mode}")
             obj.classify(multiclass_file, mode=args.mode, model_name=args.model)

@@ -7,9 +7,9 @@ import pandas as pd
 from torch.optim import Adam
 import logging
 
-logger = logging.getLogger('torch_training')
-hdlr = logging.FileHandler('logs/torch_traning.log', mode='w')
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+logger = logging.getLogger("torch_training")
+hdlr = logging.FileHandler("logs/torch_traning.log", mode="w")
+formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
@@ -21,7 +21,7 @@ class CreateData(Dataset):
 
     def __getitem__(self, item):
         features = self.df.iloc[:, 1:6].values
-        labels = self.df['label']
+        labels = self.df["label"]
 
         feature = torch.tensor(features)[item]
         label = torch.tensor(labels.values)[item]
@@ -35,11 +35,7 @@ class CreateData(Dataset):
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.seq = nn.Sequential(
-            nn.Linear(5, 10),
-            nn.Linear(10, 20),
-            nn.Linear(20, 3)
-        )
+        self.seq = nn.Sequential(nn.Linear(5, 10), nn.Linear(10, 20), nn.Linear(20, 3))
 
     def forward(self, x):
         return F.softmax(self.seq(x))
@@ -65,8 +61,8 @@ class Train:
         pass
 
 
-if __name__ == '__main__':
-    cd = CreateData('features(multiclass_classify).csv')
+if __name__ == "__main__":
+    cd = CreateData("features(multiclass_classify).csv")
     for i in range(10):
         print(cd.__getitem__(i))
     print(cd.__len__())

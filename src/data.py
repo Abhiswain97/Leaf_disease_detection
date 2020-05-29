@@ -7,16 +7,16 @@ import matplotlib.pyplot as plt
 from skimage.color import label2rgb
 from skimage.segmentation import slic
 
-folder = ['Bacterial leaf blight', 'Brown spot', 'Leaf smut']
-seg_folder = ['Bacterial_leaf_blight_seg', 'Brown_spot_seg', 'leaf_smut_seg']
-test_folder = 'Test'
+folder = ["Bacterial leaf blight", "Brown spot", "Leaf smut"]
+seg_folder = ["Bacterial_leaf_blight_seg", "Brown_spot_seg", "leaf_smut_seg"]
+test_folder = "Test"
 
 path = r"C:\Users\Abhishek Swain\PycharmProjects\leaf-disease\Leaf disease"
 
-'''image = cv2.imread(path + folder[0] + '\DSC_0365.JPG')
+"""image = cv2.imread(path + folder[0] + '\DSC_0365.JPG')
 print(image)
 cv2.imshow('hello', image)
-cv2.waitKey(0)'''
+cv2.waitKey(0)"""
 
 
 def separate_clusters(label, size, image):
@@ -56,12 +56,12 @@ def slic_segment(k, image):
 for j, fname in enumerate(folder, 0):
 
     print(fname)
-    file = os.listdir(path + '\\' + fname)
+    file = os.listdir(path + "\\" + fname)
     start = time.time()
 
     for i in file:
-        img = cv2.imread(path + '\\' + fname + '\\' + i)
+        img = cv2.imread(path + "\\" + fname + "\\" + i)
         # segment(10, img)
         slic_segment(2, img)
 
-    print(f'Time taken for {seg_folder[j]} is {time.time() - start} secs')
+    print(f"Time taken for {seg_folder[j]} is {time.time() - start} secs")

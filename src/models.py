@@ -11,7 +11,7 @@ class ClassificationModels:
             "logistic_regression_cv": self._logistic_regression_cv,
             "random_forest": self._random_forest,
             "svc": self._svc,
-            "xgboost_cv": self._xgboost_cv
+            "xgboost_cv": self._xgboost_cv,
         }
 
     def __call__(self, model, X_train, y_train, is_binary=True):
@@ -19,25 +19,29 @@ class ClassificationModels:
             raise Exception("Model not implemented")
         else:
             if is_binary:
-                name = 'binary'
-                objective = 'binary:logistic'
-                eval_metric = 'auc'
-                scoring = 'roc_auc'
-                m_name = 'roc_auc'
+                name = "binary"
+                objective = "binary:logistic"
+                eval_metric = "auc"
+                scoring = "roc_auc"
+                m_name = "roc_auc"
 
-                if model == 'xgboost_cv':
-                    self._xgboost_cv(X_train, y_train, objective, scoring, eval_metric, m_name, name)
+                if model == "xgboost_cv":
+                    self._xgboost_cv(
+                        X_train, y_train, objective, scoring, eval_metric, m_name, name
+                    )
                 else:
                     return self.models[model](X_train, y_train)
 
             elif not is_binary:
-                name = 'multiclass'
-                objective = 'multi:softmax'
-                eval_metric = 'mlogloss'
-                scoring = metrics.make_scorer(metrics.f1_score, average='weighted')
-                m_name = 'f1'
-                if model == 'xgboost_cv':
-                    self._xgboost_cv(X_train, y_train, objective, scoring, eval_metric, m_name, name)
+                name = "multiclass"
+                objective = "multi:softmax"
+                eval_metric = "mlogloss"
+                scoring = metrics.make_scorer(metrics.f1_score, average="weighted")
+                m_name = "f1"
+                if model == "xgboost_cv":
+                    self._xgboost_cv(
+                        X_train, y_train, objective, scoring, eval_metric, m_name, name
+                    )
                 else:
                     return self.models[model](X_train, y_train)
 
@@ -45,10 +49,10 @@ class ClassificationModels:
     def _logistic_regression_cv(X_train, y_train):
         return linear_model.LogisticRegressionCV(
             cv=model_selection.StratifiedKFold(
-                n_splits=3,
-                shuffle=True,
-                random_state=42
-            ), verbose=1
+                n_splits=3, shuffle=True, random_state=42
+            ),
+            verbose=0,
+            class_weight="balanced",
         ).fit(X_train, y_train)
 
     @staticmethod
@@ -61,16 +65,22 @@ class ClassificationModels:
             all_models = pd.DataFrame(bayes_cv_tuner.cv_results_)
 
             best_params = pd.Series(bayes_cv_tuner.best_params_)
-            print('Model #{}\nBest {}: {}\nBest params: {}\n'.format(
-                len(all_models),
-                m_name,
-                np.round(bayes_cv_tuner.best_score_, 4),
-                bayes_cv_tuner.best_params_
-            ))
+            print(
+                "Model #{}\nBest {}: {}\nBest params: {}\n".format(
+                    len(all_models),
+                    m_name,
+                    np.round(bayes_cv_tuner.best_score_, 4),
+                    bayes_cv_tuner.best_params_,
+                )
+            )
 
             # Save all model results
             clf_name = bayes_cv_tuner.estimator.__class__.__name__
-            all_models.to_csv('results\\' + clf_name + f"({name})_cv_results.csv")
+            all_models.to_csv(
+                "E:\\Btech project\\leaf-disease\\results\\"
+                + clf_name
+                + f"({name})_cv_results.csv"
+            )
 
         bayes_cv_tuner = BayesSearchCV(
             estimator=xgb.XGBClassifier(
@@ -78,25 +88,23 @@ class ClassificationModels:
                 objective=objective,
                 eval_metric=eval_metric,
                 silent=1,
-                tree_method='approx',
-                n_estimators=200
+                tree_method="approx",
+                n_estimators=200,
             ),
             search_spaces={
-                'learning_rate': (0.01, 1.0, 'log-uniform'),
-                'max_depth': (1, 50),
-                'n_estimators': (50, 100),
+                "learning_rate": (0.01, 1.0, "log-uniform"),
+                "max_depth": (1, 50),
+                "n_estimators": (50, 100),
             },
             scoring=scoring,
             cv=model_selection.StratifiedKFold(
-                n_splits=3,
-                shuffle=True,
-                random_state=42
+                n_splits=3, shuffle=True, random_state=42
             ),
             n_jobs=3,
             n_iter=10,
             verbose=3,
             refit=True,
-            random_state=42
+            random_state=42,
         )
 
         return bayes_cv_tuner.fit(X_train, y_train, callback=status_print)
