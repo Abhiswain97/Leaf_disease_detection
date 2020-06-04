@@ -1,4 +1,5 @@
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Abhiswain97/Leaf_disease_detection/master)
+
+<br> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Abhiswain97/Leaf_disease_detection/master)
 
 # Leaf disease detection using image segmentation 
 
