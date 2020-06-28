@@ -11,6 +11,8 @@ Instead I design a multi-stage(3 stage classifier) classifier.
 
 So What can you do to use it? <br>
 
+To run it with default settings: 
+
 ```
 git clone https://github.com/Abhiswain97/Leaf_disease_detection.git  
 cd Leaf_disease_detection
@@ -19,7 +21,8 @@ python run.py --test_image_path <path to your test image>
 
 For help: `python run.py -h`
 
-You can also directly run the `Classification.py` in `src` folder. For help: `python Classification.py -h`
+Run it with custom settings: Run the `Classification.py` in `src` folder. 
+For help: `python Classification.py -h`
 
 
 
