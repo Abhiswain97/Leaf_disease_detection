@@ -7,6 +7,10 @@ This is project on detecting leaf diseases using image segmentation. The catch i
 Instead I design a multi-stage(3 stage classifier) classifier. 
 (Refer to [project_map.png](https://github.com/Abhiswain97/Leaf_disease_detection/blob/master/project_map.png) for details)
 
+<p align="center">
+  <img src="https://github.com/Abhiswain97/Leaf_disease_detection/blob/master/project_map.png" height="200" width="200">
+</p>
+
 ### Binary-classification --> Multiclass-classification --> Mask-prediction
 
 So What can you do to use it? <br>
