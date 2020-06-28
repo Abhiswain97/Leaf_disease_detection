@@ -14,6 +14,7 @@ from skimage.segmentation import slic
 from tqdm import tqdm
 import json
 import os
+import sys
 from dataclasses import dataclass
 import csv
 from collections import Counter
@@ -52,7 +53,7 @@ import handle_imbalance
 
 
 class Files:
-    base_dir = "E:\\Btech project\\leaf_disease\\"
+    base_dir = sys.path[0][:sys.path[0].rindex('\\')+1]
     path = base_dir + "Labels\\RGB_superpixels"
     mask_label_path = base_dir + "Labels\\mask_ground_truth"
     binary_labels = np.load(
