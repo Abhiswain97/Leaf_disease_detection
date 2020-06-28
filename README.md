@@ -1,3 +1,6 @@
+
+<br> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Abhiswain97/Leaf_disease_detection/master)
+
 # Leaf disease detection using image segmentation 
 
 This is project on detecting leaf diseases using image segmentation. The catch is I do it without using deep learning. 
