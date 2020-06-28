@@ -7,17 +7,17 @@ Instead I design a multi-stage(3 stage classifier) classifier.
 ### Binary-classification --> Multiclass-classification --> Mask-prediction
 
 So What can you do to use it? <br>
-Currently, I have created the feature files(made using glcm features), U can run the classification(Binary and multiclass) and reproduce my results. Do: <br>
 
 ```
 git clone https://github.com/Abhiswain97/Leaf_disease_detection.git  
-cd src
-python Classification.py --model <model-name> --binary <option>
+cd Leaf_disease_detection
+python run.py --test_image_path <path to your test image>
 ```
 
-For help: `python Classification.py -h`
+For help: `python run.py -h`
+
+You can also directly run the `Classification.py` in `src` folder. For help: `python Classification.py -h`
 
 
-Setting binary to `True` does Binary Classification and setting it to `False` does Multi-class Classification.
 
-It's a work in progress.... So there's still polishing going on I will keep it coming!
+

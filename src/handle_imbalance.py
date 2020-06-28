@@ -1,21 +1,23 @@
-from imblearn import under_sampling
+from imblearn import under_sampling, over_sampling, combine
 
 
 class Imbalance:
     def __init__(self):
-        self.under_samplers = {
-            "all_knn": self._all_knn,
-            "condensed_nearest_neighbour": self._condensed_nearest_neighbour,
-            "edited_nearest_neighbours": self._edited_nearest_neighbours,
-            "repeated_edited_nearest_neighbours": self._repeated_edited_nearest_neighbours,
-            "random_under_sampler": self._random_under_sampler,
+        self.samplers = {
+            "smotetomek": combine.SMOTETomek(),
+            "smote": over_sampling.SMOTE(),
+            "all_knn": under_sampling.AllKNN(),
+            "condensed_nearest_neighbour": under_sampling.CondensedNearestNeighbour(),
+            "edited_nearest_neighbours": under_sampling.EditedNearestNeighbours(),
+            "repeated_edited_nearest_neighbours": under_sampling.RepeatedEditedNearestNeighbours(),
+            "random_under_sampler": under_sampling.RandomUnderSampler(),
         }
 
-    def __call__(self, under_sampler, X, y):
-        if under_sampler not in self.under_samplers:
-            raise Exception("Under Sampler not implemented")
+    def __call__(self, sampler):
+        if sampler not in self.samplers:
+            raise Exception("Sampler not implemented")
         else:
-            return self.under_samplers[under_sampler](X, y)
+            return self.samplers[sampler]
 
     @staticmethod
     def _all_knn(X, y):
@@ -36,3 +38,11 @@ class Imbalance:
     @staticmethod
     def _random_under_sampler(X, y):
         return under_sampling.RandomUnderSampler().fit_resample(X=X, y=y)
+
+    @staticmethod
+    def _smotetomek(X, y):
+        return combine.SMOTETomek().fit_resample(X=X, y=y)
+
+    @staticmethod
+    def _smote(X, y):
+        return over_sampling.SMOTE().fit_resample(X=X, y=y)

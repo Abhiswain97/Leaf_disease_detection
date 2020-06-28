@@ -1,1 +1,8 @@
-{"model": "SVC", "precision": 0.7992831541218638, "recall": 0.7275693311582382, "f1": 0.7777155670075058}
+{
+    "model": "SVC",
+    "precision": 0.7992831541218638,
+    "recall": 0.7275693311582382,
+    "f1": 0.7777155670075058,
+    "accuracy": 0.778395552025417,
+    "under_sampler": "repeated_edited_nearest_neighbours"
+}
