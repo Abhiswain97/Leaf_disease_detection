@@ -1,4 +1,6 @@
 .idea/
+.vs/
+notebooks/
 .ipynb_checkpoints/
 image_superpixel_pkls/
 Labels/
@@ -10,8 +12,6 @@ cachedir/
 wandb/
 keras_models/
 .vscode/
-.vs/
-notebooks/
 dask*/
 models/
 LeafDD.mmd
