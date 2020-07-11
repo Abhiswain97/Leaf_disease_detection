@@ -10,6 +10,9 @@ cachedir/
 wandb/
 keras_models/
 .vscode/
+.vs/
+notebooks/
+dask*/
 models/
 LeafDD.mmd
 
