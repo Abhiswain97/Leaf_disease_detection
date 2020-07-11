@@ -9,3 +9,4 @@ os.system(
     f"python src\\Classification.py --binary_model random_forest --multiclass_model svc --mask_predict_model "
     f"random_forest --sampler smotetomek --test_image_path {args.test_image_path} "
 )
+ 

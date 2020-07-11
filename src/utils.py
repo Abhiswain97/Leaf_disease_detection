@@ -421,33 +421,33 @@ class PredictUtils:
             model = models.ClassificationModels()(model_name, X, y)
 
             X.clear()
+            return model
+
             break
 
-        return model
-
-        # print("Testing !")
-        # idx = np.random.randint(2001, 2400)
-        # image = np.load(superpixel_names[idx])
-        #
-        # R = np.asarray(image[:, :, 0]).flatten()
-        # G = np.asarray(image[:, :, 1]).flatten()
-        # B = np.asarray(image[:, :, 2]).flatten()
-        #
-        # v = zip(R, G, B)
-        #
-        # for r, g, b in tqdm(v, total=len(R)):
-        #     X.append([r, g, b])
-        #
-        # y_true = np.load(masks[idx])
-        # y_pred = model.predict(X)
-        #
-        # Visualize.visualize_predictions(
-        #     y_true, np.array(y_pred).reshape(y_true.shape), idx
-        # )
-        #
-        # print(np.array(X).shape, y.shape)
-        #
-        # X.clear()
+            # print("Testing !")
+            # idx = np.random.randint(2001, 2400)
+            # image = np.load(superpixel_names[idx])
+            
+            # R = np.asarray(image[:, :, 0]).flatten()
+            # G = np.asarray(image[:, :, 1]).flatten()
+            # B = np.asarray(image[:, :, 2]).flatten()
+            
+            # v = zip(R, G, B)
+            
+            # for r, g, b in tqdm(v, total=len(R)):
+            #     X.append([r, g, b])
+            
+            # y_true = np.load(masks[idx])
+            # y_pred = model.predict(X)
+            
+            # Visualize.visualize_predictions(
+            #     y_true, np.array(y_pred).reshape(y_true.shape), idx
+            # )
+            
+            # print(np.array(X).shape, y.shape)
+            
+            # X.clear()
 
 
 class Visualize:
@@ -464,7 +464,11 @@ class Visualize:
         axs[1].imshow(predicted_mask)
         axs[1].set_axis_off()
 
-        plt.savefig(
-            f"{Files.base_dir}results\\predicted_masks\\mask_prediction-{i + 1}.png"
-        )
+        # plt.savefig(
+        #     f"{Files.base_dir}results\\predicted_masks\\mask_prediction-{i + 1}.png"
+        # )
         plt.show()
+
+
+if __name__ == "__main__":
+    PredictUtils.predict_random_masks("random_forest")

@@ -10,7 +10,6 @@ import joblib
 from tqdm import tqdm
 import logging
 import functools
-import h5py
 import matplotlib.pyplot as plt
 
 # logger = logging.getLogger("myapp-10")
