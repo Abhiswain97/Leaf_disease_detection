@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 imbalanced-learn==0.6.2
 imblearn==0.0
 ipykernel==5.1.4
@@ -23,3 +24,30 @@ scipy==1.4.1
 seaborn==0.10.0
 tqdm==4.45.0
 xgboost==0.90
+=======
+imbalanced-learn==0.6.2
+imblearn==0.0
+ipykernel==5.1.4
+ipython==7.13.0
+ipython-genutils==0.2.0
+ipywidgets==7.5.1
+jupyter==1.0.0
+jupyter-client==6.1.2
+jupyter-console==6.1.0
+jupyter-core==4.6.3
+jupyterlab==2.1.1
+jupyterlab-server==1.1.1
+matplotlib==3.2.1
+opencv-python==4.2.0.34
+opencv-python-headless==4.2.0.34
+pandas==1.0.3
+pandas-profiling==2.3.0
+scikit-image==0.16.2
+scikit-learn==0.22.1
+scikit-optimize==0.7.4
+scikit-plot==0.3.7
+scipy==1.4.1
+seaborn==0.10.0
+tqdm==4.45.0
+xgboost==0.90
+>>>>>>> f982ef333b183f9887ec33b1b4ce3eb7d646c39b
